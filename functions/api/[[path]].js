@@ -138,6 +138,20 @@ function getSecret(env) {
 }
 const FALLBACK_ADMIN_USER = 'Administrator';
 const FALLBACK_ADMIN_PASSWORD = 'password4admin';
+
+// Dedicated beta-tester account. It is provisioned automatically on first
+// sign-in so no manual D1 insert is required. The account is intentionally
+// marked so the client can expose every game feature for testing.
+const BETA_TESTER_NAME = 'Kirito';
+const BETA_TESTER_EMAIL = 'kirito@time-detectives-beta.local';
+const BETA_TESTER_PASSWORD = 'beater';
+const BETA_CASE_IDS = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,28,30,32,33,34,35,36,37,38,39,40,41,42,43];
+const BETA_CHECKPOINTS = {
+  cp1: { correct: 6, total: 6 }, cp2: { correct: 8, total: 8 },
+  cp3: { correct: 8, total: 8 }, cp4: { correct: 9, total: 9 },
+  cp5: { correct: 8, total: 8 }, cp6: { correct: 14, total: 14 },
+  cp7: { correct: 6, total: 6 }
+};
 function adminUser(env) {
   return typeof env.Admin_User === 'string' && env.Admin_User.trim() ? env.Admin_User.trim() : FALLBACK_ADMIN_USER;
 }
@@ -374,6 +388,37 @@ async function routeIllustrationDelete(request, env) {
 
 // ---------------------------------------------------------------- routes
 
+async function ensureBetaTester(env) {
+  let rec = await getPlayerByEmail(env, BETA_TESTER_EMAIL);
+  if (rec) return rec;
+  const { salt, hash } = await hashPassword(BETA_TESTER_PASSWORD);
+  const progress = {};
+  const outcomesSeen = {};
+  const contentMastery = {};
+  for (const id of BETA_CASE_IDS) {
+    progress[id] = { completed: true, tier: 'ideal', points: 100 };
+    outcomesSeen[id] = ['ideal', 'plausible', 'passive', 'misstep'];
+    contentMastery[id] = { correct: 1, total: 1 };
+  }
+  rec = {
+    detectiveName: BETA_TESTER_NAME,
+    email: BETA_TESTER_EMAIL,
+    salt, hash, isGuest: false,
+    isBetaTester: true,
+    points: BETA_CASE_IDS.length * 100,
+    progress,
+    trophies: [...BETA_CASE_IDS],
+    outcomesSeen,
+    completionistBadges: [...BETA_CASE_IDS],
+    contentMastery,
+    atlasUnlocked: [...BETA_CASE_IDS],
+    checkpointsCompleted: BETA_CHECKPOINTS,
+    cosmetics: { avatar: '🕵️', color: COLOR_OPTIONS[0] }
+  };
+  await putPlayer(env, rec);
+  return rec;
+}
+
 async function routePlayerSignup(request, env) {
   const body = await request.json().catch(() => ({}));
   const detectiveName = normName(body.detectiveName);
@@ -383,6 +428,7 @@ async function routePlayerSignup(request, env) {
   if (!detectiveName || !email || !password) return err('Please fill in a detective name, email, and password.');
   if (password.length < 6) return err('Password should be at least 6 characters.');
   if (adminUser(env) && normNameKey(detectiveName) === normNameKey(adminUser(env))) return err('That detective name is reserved. Please choose another.');
+  if (normNameKey(detectiveName) === normNameKey(BETA_TESTER_NAME)) return err('That detective name is reserved. Please choose another.');
   if (await getPlayerByEmail(env, email)) return err('An account with that email already exists — try signing in instead.');
   if (await getEmailForName(env, detectiveName)) return err('That detective name is already in use. Try another.');
 
@@ -411,7 +457,17 @@ async function routePlayerLogin(request, env) {
   const password = String(body.password || '');
   if (!idVal || !password) return err('Enter your detective name or email, and your password.');
 
-  let email = idVal.includes('@') ? normEmail(idVal) : await getEmailForName(env, idVal);
+  let email;
+  if (!idVal.includes('@') && normNameKey(idVal) === normNameKey(BETA_TESTER_NAME)) {
+    const existingBeta = await getPlayerByEmail(env, BETA_TESTER_EMAIL);
+    if (!existingBeta) {
+      if (password !== BETA_TESTER_PASSWORD) return err('We could not find a matching account, or the password is incorrect.', 401);
+      await ensureBetaTester(env);
+    }
+    email = BETA_TESTER_EMAIL;
+  } else {
+    email = idVal.includes('@') ? normEmail(idVal) : await getEmailForName(env, idVal);
+  }
   if (!email) return err('We could not find a matching account, or the password is incorrect.', 401);
 
   const rec = await getPlayerByEmail(env, email);
@@ -726,14 +782,15 @@ async function aiGate(request, env, body) {
   const rec = await requirePlayer(request, env);
   if (!rec) return err('Session expired. Please sign in again.', 401);
   const settings = await getSettings(env);
-  if (!settings.aiEnabled) return err('The Archivist is switched off right now.', 403);
+  if (!settings.aiEnabled && !rec.isBetaTester) return err('The Archivist is switched off right now.', 403);
   if (!env.AI) return err('The Archivist is not set up on this site yet.', 503);
+  const effectiveSettings = rec.isBetaTester ? { ...settings, aiEnabled: true, aiDailyLimit: 50 } : settings;
   const caseId = parseInt(body.caseId, 10);
   const notes = aiNotesFor(caseId);
   if (!notes) return err('Unknown case.', 404);
   const prog = rec.progress && rec.progress[String(caseId)];
   if (!prog || !prog.completed) return err('Finish this case first, then the Archivist can help.', 403);
-  return { rec, settings, caseId, notes };
+  return { rec, settings: effectiveSettings, caseId, notes };
 }
 
 async function routeAiAsk(request, env) {
