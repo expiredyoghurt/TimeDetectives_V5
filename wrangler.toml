@@ -1,0 +1,28 @@
+name = "time-detectives"
+compatibility_date = "2025-01-01"
+pages_build_output_dir = "."
+
+# D1 database used by functions/api/[[path]].js for pupil accounts, teacher
+# accounts, and class settings (replaces the old TD_KV namespace binding).
+# Create it with:
+#   wrangler d1 create time-detectives-db
+# then paste the "database_id" it prints in place of
+# "REPLACE_WITH_YOUR_D1_DATABASE_ID" below. See README.md "Backend setup"
+# for the full walkthrough — including how to migrate existing data out of
+# an old KV namespace instead of starting fresh.
+[[d1_databases]]
+binding = "TD_DB"
+database_name = "time-detectives-db"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+# Workers AI, used only by the Archivist and practice quiz. Having the binding
+# costs nothing; the feature stays OFF until an admin switches it on in the
+# teacher dashboard. Remove these two lines to disable AI completely.
+[ai]
+binding = "AI"
+
+# Secrets are NOT set here. Add them with `wrangler pages secret put <NAME>`
+# or in the Cloudflare dashboard (Settings > Variables and Secrets):
+#   SESSION_SECRET   random string, 32+ characters
+#   Admin_User       admin sign-in username
+#   Admin_Password   admin sign-in password, 12+ characters
