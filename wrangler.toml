@@ -13,7 +13,7 @@ pages_build_output_dir = "."
 [[d1_databases]]
 binding = "TD_DB"
 database_name = "time-detectives-db"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "d4478584-c250-4b30-9679-a97730cbac35"
 
 # Workers AI, used only by the Archivist and practice quiz. Having the binding
 # costs nothing; the feature stays OFF until an admin switches it on in the
