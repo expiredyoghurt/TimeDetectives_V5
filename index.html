@@ -84,6 +84,8 @@
   .launch .tag{ color: var(--parchment-3); max-width: 620px; font-size:calc(17px * var(--text-scale)); line-height:1.6; }
   .case-file-icon{ font-size:calc(40px * var(--text-scale)); }
   .launch-actions{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-top:10px; }
+  .teacher-login-link{ display:block; margin-top:4px; font-size:11px; line-height:1.2; color:var(--ink-2); text-decoration:underline; text-underline-offset:2px; cursor:pointer; background:none; border:0; padding:2px 4px; }
+  .teacher-login-link:hover{ color:var(--ink); }
   .premise-card{
     max-width: 640px; background: var(--parchment); color: var(--ink);
     border-radius:12px; padding: 26px 30px; text-align:left; box-shadow: var(--shadow);
@@ -720,6 +722,7 @@
         <button class="btn btn-secondary" id="btn-goto-login">Sign in</button>
         <button class="btn btn-ghost" id="btn-play-guest">Play as guest</button>
       </div>
+      <button type="button" class="teacher-login-link" id="btn-goto-teacher-login">Teacher log-in</button>
     </div>
   </section>
 
@@ -769,6 +772,29 @@
         </form>
 
         <button class="btn btn-ghost" id="btn-back-launch" style="margin-top:12px;">&larr; Back</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== TEACHER / ADMIN LOGIN SCREEN ===================== -->
+  <section id="screen-teacher-login" class="screen" aria-label="Teacher and admin access">
+    <div class="auth-wrap">
+      <div class="auth-card">
+        <h2>Teacher / admin access</h2>
+        <p class="form-note" style="margin-top:-6px; margin-bottom:18px;">For teachers and administrators only.</p>
+        <form id="form-teacher-login" novalidate>
+          <div class="field">
+            <label for="teacher-login-username">Username</label>
+            <input id="teacher-login-username" type="text" autocomplete="username" required>
+          </div>
+          <div class="field">
+            <label for="teacher-login-password">Password</label>
+            <input id="teacher-login-password" type="password" autocomplete="current-password" required>
+          </div>
+          <p class="form-error" id="teacher-login-error" role="alert"></p>
+          <button type="submit" class="btn btn-primary btn-block">Teacher log-in</button>
+        </form>
+        <button class="btn btn-ghost" id="btn-back-launch-teacher" style="margin-top:12px;">&larr; Back</button>
       </div>
     </div>
   </section>
@@ -8371,7 +8397,13 @@ function showScreen(id){
 // ===================== LAUNCH -> AUTH =====================
 document.getElementById('btn-goto-signup').addEventListener('click', () => { switchAuthTab('signup'); showScreen('screen-auth'); });
 document.getElementById('btn-goto-login').addEventListener('click', () => { switchAuthTab('login'); showScreen('screen-auth'); });
+document.getElementById('btn-goto-teacher-login').addEventListener('click', () => {
+  document.getElementById('form-teacher-login').reset();
+  document.getElementById('teacher-login-error').textContent = '';
+  showScreen('screen-teacher-login');
+});
 document.getElementById('btn-back-launch').addEventListener('click', () => showScreen('screen-launch'));
+document.getElementById('btn-back-launch-teacher').addEventListener('click', () => showScreen('screen-launch'));
 document.getElementById('btn-play-guest').addEventListener('click', playAsGuest);
 
 function switchAuthTab(which){
@@ -8439,9 +8471,7 @@ document.getElementById('form-signup').addEventListener('submit', async (e) => {
   logInWithAccount(result.data.account, result.data.token);
 });
 
-// ===== Log in (student, or teacher/admin — tried first since the login
-// field is shared; a normal detective name/email will simply fail teacher
-// auth and fall through to student sign-in) =====
+// ===== Detective log in =====
 document.getElementById('form-login').addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = e.target;
@@ -8453,21 +8483,10 @@ document.getElementById('form-login').addEventListener('submit', async (e) => {
   if (!idVal || !password){ errEl.textContent = 'Enter your detective name or email, and your password.'; return; }
 
   setBusy(form, true, 'Signing in…');
-
-  const teacherResult = await apiCall('teacher/login', { method: 'POST', body: { username: idVal, password } });
-  if (teacherResult.ok){
-    setBusy(form, false);
-    teacherSession = { username: teacherResult.data.username, role: teacherResult.data.role, token: teacherResult.data.token };
-    saveTeacherSessionLocal();
-    await renderTeacherDashboard();
-    showScreen('screen-teacher');
-    return;
-  }
-
   const playerResult = await apiCall('player/login', { method: 'POST', body: { idValue: idVal, password } });
   setBusy(form, false);
   if (!playerResult.ok){
-    errEl.textContent = playerResult.offline ? playerResult.error : 'We could not find a matching account, or the password is incorrect.';
+    errEl.textContent = playerResult.offline ? playerResult.error : 'We could not find a matching detective account, or the password is incorrect.';
     return;
   }
   logInWithAccount(playerResult.data.account, playerResult.data.token);
@@ -8481,9 +8500,34 @@ document.getElementById('btn-logout').addEventListener('click', () => {
   clearPlayerToken();
   document.getElementById('form-signup').reset();
   document.getElementById('form-login').reset();
+  document.getElementById('form-teacher-login').reset();
   showScreen('screen-launch');
   updateSyncPill();
 });
+document.getElementById('form-teacher-login').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const username = document.getElementById('teacher-login-username').value.trim();
+  const password = document.getElementById('teacher-login-password').value;
+  const errEl = document.getElementById('teacher-login-error');
+  errEl.textContent = '';
+
+  if (!username || !password){ errEl.textContent = 'Enter your username and password.'; return; }
+
+  setBusy(form, true, 'Signing in…');
+  const result = await apiCall('teacher/login', { method: 'POST', body: { username, password } });
+  setBusy(form, false);
+  if (!result.ok){
+    errEl.textContent = result.error || 'We could not sign you in.';
+    return;
+  }
+
+  teacherSession = { username: result.data.username, role: result.data.role, token: result.data.token };
+  saveTeacherSessionLocal();
+  await renderTeacherDashboard();
+  showScreen('screen-teacher');
+});
+
 document.getElementById('btn-teacher-signout').addEventListener('click', () => {
   teacherSession = null;
   sessionStorage.removeItem(TEACHER_SESSION_KEY);

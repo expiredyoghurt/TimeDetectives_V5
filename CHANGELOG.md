@@ -1,3 +1,11 @@
+# Time Detectives v5.0 — requested patch
+
+- Reduced PBKDF2-SHA256 password-hashing iterations from 150,000 to 100,000 in both password-generation and password-verification paths.
+- Separated teacher/admin authentication from the pupil sign-in form.
+- Added a small **Teacher log-in** link below the launch-page account controls; it opens a dedicated teacher/admin sign-in screen.
+- Added fallback admin credentials `Administrator` / `password4admin` when the corresponding Pages secrets are absent or blank. `Admin_User` and `Admin_Password` secrets override the fallbacks.
+- Kept the existing minimum admin-password length check (12 characters).
+
 # Changelog
 
 ## 3.0
