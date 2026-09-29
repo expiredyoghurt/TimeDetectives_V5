@@ -8629,10 +8629,12 @@ document.getElementById('btn-save-cosmetics').addEventListener('click', () => {
 
 // ===================== MENU =====================
 function isCaseSkipped(caseId){
+  if (currentAccount() && currentAccount().isBetaTester) return false;
   const s = getSettings();
   return s.assignedCaseIds && s.assignedCaseIds.length > 0 && !s.assignedCaseIds.includes(caseId);
 }
 function isCaseUnlocked(order){
+  if (currentAccount() && currentAccount().isBetaTester) return true;
   if (order === 1) return true;
   const prevCase = CASES[order - 2];
   if (isCaseSkipped(prevCase.id)) return isCaseUnlocked(order - 1);
@@ -9174,7 +9176,7 @@ function csvEscape(str){
 function clearCaseTimer(){ caseTimerState = { caseId: null, deadline: null, expired: false }; currentExpireHandler = null; }
 function startCaseTimer(c){
   const s = getSettings();
-  if (!s.timeLimitMinutes){ caseTimerState = { caseId: c.id, deadline: null, expired: false }; return; }
+  if (currentAccount() && currentAccount().isBetaTester || !s.timeLimitMinutes){ caseTimerState = { caseId: c.id, deadline: null, expired: false }; return; }
   caseTimerState = { caseId: c.id, deadline: Date.now() + s.timeLimitMinutes * 60000, expired: false };
 }
 setInterval(() => {
@@ -9205,9 +9207,9 @@ function toolbarHtml(c, includeTimer){
     <div class="toolbar-row">
       <button class="btn btn-secondary" id="btn-glossary">📖 Glossary</button>
       <button class="btn btn-secondary briefing-recap-btn" id="btn-briefing-recap">🏛️ Civilisation briefing</button>
-      ${s.showHints ? `<button class="btn btn-secondary" id="btn-hint">💡 Hint</button>` : ''}
+      ${(s.showHints || (currentAccount() && currentAccount().isBetaTester)) ? `<button class="btn btn-secondary" id="btn-hint">💡 Hint</button>` : ''}
       ${archivistButtonHtml(c)}
-      ${includeTimer && s.timeLimitMinutes ? `<span class="points-pill" id="case-timer-badge" style="background:var(--teal);"></span>` : ''}
+      ${includeTimer && s.timeLimitMinutes && !(currentAccount() && currentAccount().isBetaTester) ? `<span class="points-pill" id="case-timer-badge" style="background:var(--teal);"></span>` : ''}
     </div>
   `;
 }
@@ -9238,7 +9240,7 @@ function openCase(id){
   startCaseTimer(c);
   updateCasePoints();
 
-  if (prog && prog.completed && !settings.allowRetry){
+  if (prog && prog.completed && !settings.allowRetry && !(acc && acc.isBetaTester)){
     renderReadOnlySummary(c, prog);
   } else if (!prog || !prog.completed){
     renderLegacyBriefing(c); // first-time attempt: teach content knowledge before the mystery
@@ -10091,7 +10093,7 @@ let archivistCase = null;
 let archivistLogId = null;
 function archivistAvailable(c){
   const acc = currentAccount();
-  return !!(getSettings().aiEnabled && acc && !acc.isGuest && getPlayerToken() && acc.progress[c.id] && acc.progress[c.id].completed);
+  return !!(acc && !acc.isGuest && getPlayerToken() && acc.progress[c.id] && acc.progress[c.id].completed && (getSettings().aiEnabled || acc.isBetaTester));
 }
 function archivistButtonHtml(c, cls){
   return archivistAvailable(c) ? `<button class="btn ${cls || 'btn-secondary'}" type="button" data-archivist="${c.id}">🗂️ Ask the Archivist</button>` : '';
