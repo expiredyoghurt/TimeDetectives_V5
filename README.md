@@ -164,10 +164,10 @@ Three secrets are **required**. There are no defaults and no fallbacks:
 | Secret | Purpose | Rules |
 |---|---|---|
 | `SESSION_SECRET` | Signs sign-in tokens. | Random string, **32+ characters**. If it is missing or short, the whole API refuses to run (a missing secret must never become a guessable one). |
-| `Admin_User` | Admin sign-in username. | Any name. Matching is case-insensitive, and pupils and teachers can't register it. |
-| `Admin_Password` | Admin sign-in password. | **12+ characters**. If it is missing or shorter, admin sign-in is disabled with a clear message. Normal teacher accounts keep working. |
+| `Admin_User` | Admin sign-in username. | Optional. Defaults to `Administrator` if the secret is absent/blank. Matching is case-insensitive, and pupils and teachers can't register it. A Pages secret overrides the fallback. |
+| `Admin_Password` | Admin sign-in password. | Optional. Defaults to `password4admin` if the secret is absent/blank. The fallback and any secret must be **12+ characters**. A Pages secret overrides the fallback. |
 
-Secret names are case-sensitive: type `Admin_User` and `Admin_Password` exactly.
+Secret names are case-sensitive: type `Admin_User` and `Admin_Password` exactly. They are optional because the package includes fallback admin credentials for initial access; set the Pages secrets to replace those fallbacks before normal use.
 
 Set them after the first deploy, since Pages secrets attach to an existing project:
 
@@ -207,9 +207,10 @@ the Function picks them up.
 3. After the first deploy: go to the project -> **Settings** -> **Functions**
    -> **D1 database bindings** -> add binding `TD_DB` pointing at the
    database you created in step 1.
-4. Also in **Settings** -> **Variables and Secrets** -> add `SESSION_SECRET`,
-   `Admin_User` and `Admin_Password` as **secrets**, for both Production and
-   Preview. If you want the Archivist, also add a **Workers AI** binding named
+4. Also in **Settings** -> **Variables and Secrets**, add `SESSION_SECRET`
+   as a secret. `Admin_User` and `Admin_Password` are optional secrets that
+   override the built-in fallback admin credentials; if you set them, add
+   them for both Production and Preview. If you want the Archivist, also add a **Workers AI** binding named
    `AI` under **Settings** -> **Functions** -> **Workers AI binding**.
 5. Redeploy (upload again, or **Retry deployment**) so the new bindings and
    variables take effect.
@@ -265,7 +266,8 @@ snapshot and before you deploy this package won't carry over automatically.
 6. **Set your secrets** (step 3 of "Backend setup") — if you're redeploying
    to the *same* Pages project you used for the KV version, `SESSION_SECRET`
    is probably already set, but the admin credentials are **not** the old
-   `TEACHER_ADMIN_*` names any more: add `Admin_User` and `Admin_Password`.
+   `TEACHER_ADMIN_*` names any more: use the optional `Admin_User` and
+   `Admin_Password` secrets if you want to override the built-in fallbacks.
    Existing pupil sign-in tokens keep working since the token format
    didn't change.
 
@@ -322,11 +324,10 @@ put the correct option — pupils never see the stored order anyway.
   button, or a close-tab flush. If the connection drops mid-lesson, play
   continues from the local copy and catches up once it's back and the next
   save trigger fires.
-- Teacher/admin sign-in uses the **same** "Sign in" form pupils use — typing
-  the admin username and password (or a teacher account an admin
-  created) routes to the teacher dashboard instead of the game menu. That
-  check happens on the server; a pupil typing a random guess just gets
-  rejected the same as a wrong game password would.
+- Teacher/admin access is separate from pupil sign-in. A small **Teacher
+  log-in** link below the launch-page account controls opens a dedicated
+  teacher/admin sign-in form. Teacher/admin credentials are checked on the
+  server.
 - The roster, skill matrix, and CSV export in the teacher dashboard are
   populated by `GET /api/teacher/roster`, which now runs a single SQL query
   against every pupil's D1 row — so it's the same list no matter which
@@ -511,7 +512,7 @@ Node, safe to run any time you edit `index.html` or the Function.
 ## Troubleshooting
 
 - **"set the SESSION_SECRET secret" error on every request:** `SESSION_SECRET` is missing or under 32 characters. Set it (step 3) and redeploy.
-- **"Admin sign-in is not set up yet":** add the `Admin_User` and `Admin_Password` secrets (exact spelling, both Production and Preview) and redeploy. If it says the password is too short, use 12+ characters.
+- **Teacher/admin sign-in:** if no `Admin_User` or `Admin_Password` Pages secrets are set, the built-in fallback is `Administrator` / `password4admin`. Setting either secret overrides its fallback. The password must be at least 12 characters.
 - **The Archivist button never appears:** the admin switch is off (or unsaved), the pupil is playing as a guest, or the case isn't finished. If pupils see "not set up on this site yet", the `AI` binding is missing.
 - **"Backend not configured" errors, or progress not syncing:** the `TD_DB`
   D1 binding isn't set. Check `wrangler.toml` has a real `database_id` (not
