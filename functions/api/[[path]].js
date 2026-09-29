@@ -8,9 +8,10 @@
 //   - A pupil's progress is stored in D1 under their account (email), and
 //     following the SAME sign-in from ANY device/browser pulls it back.
 //   - Teacher/admin sign-in is verified on the server. The admin username
-//     and password are NEVER in the client HTML or in this source — they live
-//     only as Cloudflare secrets named Admin_User and Admin_Password
-//     (see README). If either is missing, admin sign-in is disabled.
+//     and password are NEVER in the client HTML — they are read from
+//     Cloudflare secrets named Admin_User and Admin_Password when present.
+//     If either secret is absent, the built-in fallback credentials are used
+//     (see README); setting the Pages secrets overrides those fallbacks.
 //   - The teacher dashboard reads every pupil's record with a single SQL
 //     query, so a teacher signing in from their own laptop sees the whole
 //     class, not just whoever played on that specific machine.
@@ -26,8 +27,8 @@
 //   D1 database binding:   TD_DB
 //   Secret (REQUIRED):     SESSION_SECRET   (random string, 32+ characters;
 //                                            the API refuses to run without it)
-//   Secret (REQUIRED):     Admin_User       (admin sign-in username)
-//   Secret (REQUIRED):     Admin_Password   (admin sign-in password, 12+ chars)
+//   Secret (OPTIONAL):     Admin_User       (admin sign-in username; fallback: Administrator)
+//   Secret (OPTIONAL):     Admin_Password   (admin sign-in password; fallback: password4admin)
 //   Binding (optional):    AI               (Workers AI; only for the Archivist
 //                                            and practice quiz, which the admin
 //                                            can also switch off in the dashboard)
@@ -135,11 +136,16 @@ function getSecret(env) {
   if (!sessionSecretOk(env)) throw new Error('SESSION_SECRET is missing or too short');
   return env.SESSION_SECRET;
 }
-function adminUser(env) { return typeof env.Admin_User === 'string' ? env.Admin_User.trim() : ''; }
-function adminPass(env) { return typeof env.Admin_Password === 'string' ? env.Admin_Password : ''; }
+const FALLBACK_ADMIN_USER = 'Administrator';
+const FALLBACK_ADMIN_PASSWORD = 'password4admin';
+function adminUser(env) {
+  return typeof env.Admin_User === 'string' && env.Admin_User.trim() ? env.Admin_User.trim() : FALLBACK_ADMIN_USER;
+}
+function adminPass(env) {
+  return typeof env.Admin_Password === 'string' && env.Admin_Password ? env.Admin_Password : FALLBACK_ADMIN_PASSWORD;
+}
 // 'ok' | 'missing' | 'weak'
 function adminConfigStatus(env) {
-  if (!adminUser(env) || !adminPass(env)) return 'missing';
   if (adminPass(env).length < MIN_ADMIN_PASSWORD_LENGTH) return 'weak';
   return 'ok';
 }
@@ -482,9 +488,6 @@ async function routeTeacherLogin(request, env) {
       const token = await signToken({ sub: t.username, role: 'teacher', exp: Math.floor(Date.now() / 1000) + TEACHER_TOKEN_TTL }, getSecret(env));
       return json({ token, username: t.username, role: 'teacher' });
     }
-  }
-  if (status === 'missing') {
-    return err('Admin sign-in is not set up yet. Add the Admin_User and Admin_Password secrets in Cloudflare (see README).', 503);
   }
   if (status === 'weak') {
     return err('Admin sign-in is disabled: the Admin_Password secret must be at least ' + MIN_ADMIN_PASSWORD_LENGTH + ' characters.', 503);
