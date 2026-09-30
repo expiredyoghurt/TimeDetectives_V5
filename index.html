@@ -553,6 +553,65 @@
   .ai-log-meta{ color: var(--ink-2); font-size:calc(12px * var(--text-scale)); }
   .ai-log-flag{ color: var(--danger); font-weight:700; margin-left:6px; }
   .guardrail-list{ margin:6px 0 12px 18px; padding:0; font-size:calc(13px * var(--text-scale)); color: var(--ink-2); line-height:1.6; }
+
+  /* ===== v5.1: confirm step, progress tracker, chapters, knowledge check, teacher tabs ===== */
+  .option-btn.selected{ border-color: var(--brass); background: var(--white); box-shadow: 0 0 0 2px var(--brass) inset; }
+  .confirm-bar{ list-style:none; display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:4px; }
+  .confirm-bar span{ font-size:calc(13px * var(--text-scale)); color: var(--parchment-3); }
+
+  .steps{ display:flex; gap:4px; list-style:none; padding:0; margin:0 0 14px; flex-wrap:wrap; }
+  .steps li{ display:flex; align-items:center; gap:6px; padding:4px 10px 4px 4px; border-radius:999px; background:rgba(255,255,255,0.06); color: var(--parchment-3); font-size:calc(12.5px * var(--text-scale)); }
+  .steps .step-dot{ width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-weight:700; font-size:calc(11.5px * var(--text-scale)); background:rgba(255,255,255,0.14); }
+  .steps li.done{ color: var(--parchment); }
+  .steps li.done .step-dot{ background: var(--teal-light); color:#fff; }
+  .steps li.current{ background: var(--brass); color: var(--white); font-weight:700; }
+  .steps li.current .step-dot{ background: var(--white); color: var(--brass); }
+  @media (max-width: 560px){ .steps li:not(.current) .step-label{ display:none; } .steps li:not(.current){ padding-right:4px; } }
+
+  .continue-card{ display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; background: var(--parchment); color: var(--ink); border-radius:10px; padding:14px 18px; margin-bottom:18px; border-left:6px solid var(--brass); }
+  .continue-card > div{ display:flex; flex-direction:column; gap:2px; }
+  .cc-eyebrow{ font-size:calc(11.5px * var(--text-scale)); letter-spacing:.08em; text-transform:uppercase; color: var(--brass); font-weight:700; }
+  .cc-sub{ font-size:calc(13px * var(--text-scale)); color: var(--ink-2); }
+  .chapter-list{ display:flex; flex-direction:column; gap:12px; }
+  .chapter{ background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:0 14px; }
+  .chapter[open]{ padding-bottom:16px; }
+  .chapter > summary{ cursor:pointer; list-style:none; display:grid; grid-template-columns:1fr auto; gap:4px 12px; align-items:center; padding:14px 0; }
+  .chapter > summary::-webkit-details-marker{ display:none; }
+  .chapter > summary::before{ content:'▸'; position:absolute; margin-left:-12px; }
+  .ch-title{ font-family: var(--font-display); font-size:calc(18px * var(--text-scale)); color: var(--parchment); }
+  .ch-meta{ font-size:calc(13px * var(--text-scale)); color: var(--parchment-3); }
+  .ch-bar{ grid-column:1 / -1; height:6px; border-radius:3px; background:rgba(255,255,255,0.12); overflow:hidden; }
+  .ch-bar span{ display:block; height:100%; background: var(--teal-light); }
+
+  .kc-progress{ font-size:calc(13px * var(--text-scale)); color: var(--ink-2); font-weight:700; }
+  .kc-bar{ height:6px; border-radius:3px; background: var(--parchment-2); overflow:hidden; margin:6px 0 12px; }
+  .kc-bar span{ display:block; height:100%; background: var(--teal); }
+  .kc-teach{ margin-top:12px; padding:12px 14px; border-radius:8px; line-height:1.55; font-size:calc(14.5px * var(--text-scale)); }
+  .kc-teach p{ margin:6px 0 0; }
+  .kc-teach.ok{ background:#e4f2e6; border-left:4px solid var(--success); }
+  .kc-teach.miss{ background:#f6ede0; border-left:4px solid var(--brass); }
+  .kc-score{ font-size:calc(16px * var(--text-scale)); }
+
+  .sr-only{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+  .hint-panel{ background: var(--parchment); color: var(--ink); border-left:5px solid var(--brass); border-radius:8px; padding:12px 16px; margin:0 0 16px; }
+  .hint-cost{ margin:0 0 8px; font-size:calc(12.5px * var(--text-scale)); color: var(--ink-2); font-weight:600; }
+  .hint-line{ margin:0 0 8px; line-height:1.55; font-size:calc(14.5px * var(--text-scale)); }
+  .hint-tag{ display:inline-block; font-size:calc(11.5px * var(--text-scale)); font-weight:700; text-transform:uppercase; letter-spacing:.06em; color: var(--brass); margin-right:6px; }
+  .hint-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
+  #case-timer-badge.timer-low{ background: var(--brass) !important; }
+  .teacher-tabs{ display:flex; gap:4px; flex-wrap:wrap; border-bottom:1px solid rgba(255,255,255,0.15); margin-bottom:18px; }
+  .teacher-tab{ background:none; border:none; color: var(--parchment-3); padding:10px 16px; font-size:calc(14.5px * var(--text-scale)); font-weight:600; border-bottom:3px solid transparent; }
+  .teacher-tab[aria-selected="true"]{ color: var(--white); border-bottom-color: var(--brass-light); }
+  .teacher-panel{ display:none; }
+  .teacher-panel.active{ display:block; }
+  #settings-savebar{ display:none; position:sticky; bottom:0; z-index:50; background: var(--ink-2); border-top:2px solid var(--brass); padding:10px 16px; margin-top:16px; align-items:center; gap:14px; flex-wrap:wrap; }
+  #settings-savebar.visible{ display:flex; }
+  #settings-dirty-note{ font-size:calc(13px * var(--text-scale)); color: var(--brass-light); font-weight:600; }
+  .bulk-box textarea{ width:100%; min-height:130px; padding:10px; border-radius:6px; border:1px solid var(--parchment-3); font-family:inherit; font-size:calc(14px * var(--text-scale)); }
+  .bulk-opts{ display:flex; gap:18px; flex-wrap:wrap; margin:10px 0; align-items:flex-end; }
+  .bulk-opts label{ font-size:calc(13.5px * var(--text-scale)); }
+  .bulk-code{ font-family: ui-monospace, Menlo, Consolas, monospace; background: var(--parchment-2); padding:2px 8px; border-radius:4px; font-weight:700; letter-spacing:.06em; }
+  .bulk-status-created{ color: var(--success); font-weight:700; } .bulk-status-exists, .bulk-status-invalid{ color: var(--danger); font-weight:700; }
 </style>
 </head>
 <body>
@@ -743,32 +802,28 @@
             <input id="signup-name" type="text" autocomplete="nickname" required>
           </div>
           <div class="field">
-            <label for="signup-email">Email</label>
-            <input id="signup-email" type="email" autocomplete="email" required>
-          </div>
-          <div class="field">
             <label for="signup-password">Password</label>
             <input id="signup-password" type="password" autocomplete="new-password" required minlength="6">
           </div>
           <p class="form-error" id="signup-error" role="alert"></p>
           <button type="submit" class="btn btn-primary btn-block">Open detective file</button>
-          <p class="form-note">Your case is saved to your account. Sign in with the same email and password on any device to continue where you left off.</p>
+          <p class="form-note">Your case is saved to your account. Sign in with the same detective name and password on any device to continue where you left off. No email needed.</p>
         </form>
 
         <!-- Login form -->
         <form id="form-login" style="display:none;" novalidate>
           <h2>Welcome back, detective</h2>
           <div class="field">
-            <label for="login-id">Detective name or email</label>
+            <label for="login-id">Detective name</label>
             <input id="login-id" type="text" autocomplete="username" required>
           </div>
           <div class="field">
-            <label for="login-password">Password</label>
+            <label for="login-password">Password or PIN</label>
             <input id="login-password" type="password" autocomplete="current-password" required>
           </div>
           <p class="form-error" id="login-error" role="alert"></p>
           <button type="submit" class="btn btn-primary btn-block">Sign in</button>
-          <p class="form-note">Forgotten your password? Ask Admin to reset it for you from the teacher dashboard.</p>
+          <p class="form-note">Forgotten your password or PIN? Ask your teacher to reset it.</p>
         </form>
 
         <button class="btn btn-ghost" id="btn-back-launch" style="margin-top:12px;">&larr; Back</button>
@@ -844,6 +899,132 @@
     </div>
     <div class="teacher-body">
 
+      <div class="teacher-tabs" role="tablist" aria-label="Teacher dashboard sections">
+        <button class="teacher-tab" role="tab" id="tab-t-class" aria-selected="true" aria-controls="panel-t-class" data-tab="class">Class</button>
+        <button class="teacher-tab" role="tab" id="tab-t-cases" aria-selected="false" aria-controls="panel-t-cases" data-tab="cases" tabindex="-1">Cases</button>
+        <button class="teacher-tab" role="tab" id="tab-t-settings" aria-selected="false" aria-controls="panel-t-settings" data-tab="settings" tabindex="-1">Settings</button>
+        <button class="teacher-tab" role="tab" id="tab-t-archivist" aria-selected="false" aria-controls="panel-t-archivist" data-tab="archivist" tabindex="-1">Archivist</button>
+        <button class="teacher-tab" role="tab" id="tab-t-admin" aria-selected="false" aria-controls="panel-t-admin" data-tab="admin" tabindex="-1" style="display:none;">Admin</button>
+      </div>
+
+      <div class="teacher-panel active" role="tabpanel" id="panel-t-class" aria-labelledby="tab-t-class">
+      <div class="teacher-section">
+        <h3>Student roster</h3>
+        <div class="table-scroll">
+          <table class="teacher-table" id="roster-table"></table>
+        </div>
+        <button class="btn btn-secondary" id="btn-export-csv" style="margin-top:14px;">Export results (CSV)</button>
+      </div>
+
+      <div class="teacher-section bulk-box" id="bulk-section">
+        <h3>Set up a class</h3>
+        <p style="font-size:calc(13px * var(--text-scale)); color:var(--ink-2); margin-top:-6px;">Paste one name per line (or separate with commas). Each pupil gets an account with a sign-in code. Use first names or nicknames — detective names are visible on the leaderboard.</p>
+        <label for="bulk-names" style="font-weight:700;">Detective names</label>
+        <textarea id="bulk-names" placeholder="Aisha&#10;Ben&#10;Chloe"></textarea>
+        <div class="bulk-opts">
+          <fieldset style="border:none; padding:0; margin:0;">
+            <legend style="font-weight:700; font-size:calc(13.5px * var(--text-scale));">Sign-in code</legend>
+            <label><input type="radio" name="bulk-mode" value="pin" checked> 4-digit PIN</label>
+            <label style="margin-left:14px;"><input type="radio" name="bulk-mode" value="password"> 8-character password</label>
+          </fieldset>
+          <div>
+            <label for="bulk-suffix" style="font-weight:700;">Add to every name (optional)</label><br>
+            <input type="text" id="bulk-suffix" maxlength="8" placeholder="e.g. 7B" style="width:120px;">
+          </div>
+        </div>
+        <p class="form-error" id="bulk-error" role="alert"></p>
+        <button class="btn btn-primary" id="btn-bulk-create" type="button">Create accounts</button>
+        <span id="bulk-progress" role="status" style="margin-left:10px; font-size:calc(13px * var(--text-scale));"></span>
+        <div id="bulk-results" style="margin-top:14px;"></div>
+      </div>
+      <div class="teacher-section">
+        <h3>Per-skill mastery, by student</h3>
+        <p style="font-size:calc(13px * var(--text-scale)); color:var(--ink-2); margin-top:-6px;">Cell shows average score across completed cases testing that skill. Cases mapped to standards named in the curriculum design.</p>
+        <div class="table-scroll">
+          <table class="teacher-table" id="skill-matrix-table"></table>
+        </div>
+      </div>
+
+      </div>
+      <div class="teacher-panel" role="tabpanel" id="panel-t-cases" aria-labelledby="tab-t-cases">
+      <div class="teacher-section">
+        <h3>Assigned cases</h3>
+        <div class="settings-field">
+          <label>Cases assigned to students (unchecked cases are automatically skipped in the unlock sequence)</label>
+          <div class="assign-grid" id="assign-grid"></div>
+        </div>
+      </div>
+      <div class="teacher-section">
+        <h3>Legacy illustrations</h3>
+        <p style="font-size:calc(13px * var(--text-scale)); color:var(--ink-2); margin-top:-6px;">Add artwork for the case artifacts and civilisation legacies shown throughout the game — paste an image URL, or upload a file (kept under ~1.5MB). Until you add one, pupils see a placeholder box instead. Grouped by case below; any signed-in teacher can manage these, not just admin.</p>
+        <div id="illustrations-manager"></div>
+      </div>
+
+      <div class="teacher-section">
+        <h3>Teacher walkthrough</h3>
+        <p style="font-size:calc(13px * var(--text-scale)); color:var(--ink-2); margin-top:-6px;">An answer key for every case: each decision, all four answers with their tier and points, the feedback and in-world consequences pupils see, and the knowledge-check answers. Keep it away from pupils.</p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-secondary" id="btn-print-walkthrough" type="button">Open printable view</button>
+          <button class="btn btn-secondary" id="btn-download-walkthrough" type="button">Download (Markdown)</button>
+        </div>
+      </div>
+
+      </div>
+      <div class="teacher-panel" role="tabpanel" id="panel-t-settings" aria-labelledby="tab-t-settings">
+      <div class="teacher-section">
+        <h3>Class settings</h3>
+        <div class="settings-grid">
+          <div class="settings-field">
+            <label class="toggle-row"><input type="checkbox" id="setting-allow-retry"> Allow students to retry a case after resolving it</label>
+          </div>
+          <div class="settings-field">
+            <label class="toggle-row"><input type="checkbox" id="setting-show-hints"> Show a hint button during cases</label>
+          </div>
+          <div class="settings-field">
+            <label for="setting-time-limit">Time limit per case (minutes, blank = none)</label>
+            <input type="number" id="setting-time-limit" min="1" placeholder="No limit">
+          </div>
+          <div class="settings-field">
+            <label for="setting-timer-mode">When time runs out</label>
+            <select id="setting-timer-mode">
+              <option value="reminder">Remind only: pupils keep going (recommended)</option>
+              <option value="strict">Strict: auto-submit the selected (or a passive) answer</option>
+            </select>
+            <p style="font-size:calc(12px * var(--text-scale)); color:var(--ink-2); margin:4px 0 0;">Pupils always get a warning one minute before. Extra time for individual pupils is set in Class, then Manage.</p>
+          </div>
+        </div>
+        <div class="settings-field" id="teacher-ai-section" style="margin:14px 0;">
+          <label style="font-weight:700;">Archivist and practice quiz (AI)</label>
+          <p id="ai-admin-only-note" style="display:none; font-size:calc(12.5px * var(--text-scale)); color:var(--ink-2); margin:4px 0;">Only the admin can change these two settings.</p>
+          <label class="toggle-row"><input type="checkbox" id="setting-ai-enabled"> Let pupils use the Archivist and practice quiz (off by default)</label>
+          <div style="margin-top:8px; max-width:320px;">
+            <label for="setting-ai-limit">AI requests per pupil per day</label>
+            <input type="number" id="setting-ai-limit" min="1" max="50" value="10">
+          </div>
+          <ul class="guardrail-list">
+            <li>Only signed-in pupils, and only for a case they have already finished.</li>
+            <li>The AI sees this case's notes only, so it can't be used as a general chatbot.</li>
+            <li>Questions are capped at 200 characters and obvious "ignore your rules" tricks are refused.</li>
+            <li>Every question and answer is logged below, and pupils can report an answer to you.</li>
+            <li>Nothing the AI does changes points, skill scores or the leaderboard.</li>
+          </ul>
+        </div>
+      </div>
+
+      </div>
+      <div class="teacher-panel" role="tabpanel" id="panel-t-archivist" aria-labelledby="tab-t-archivist">
+      <div class="teacher-section">
+        <h3>Archivist activity</h3>
+        <p style="font-size:calc(13px * var(--text-scale)); color:var(--ink-2); margin-top:-6px;">The most recent 200 questions and answers. Reported answers are highlighted. Pupils are told you can see what they ask.</p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+          <button class="btn btn-secondary" id="btn-refresh-ai-log" type="button">Refresh</button>
+          <button class="btn btn-secondary" id="btn-clear-ai-log" type="button" style="display:none;">Clear log (admin)</button>
+        </div>
+        <div id="ai-log-list"></div>
+      </div>
+
+      </div>
+      <div class="teacher-panel" role="tabpanel" id="panel-t-admin" aria-labelledby="tab-t-admin">
       <div class="teacher-section" id="teacher-accounts-section" style="display:none;">
         <h3>Teacher &amp; admin accounts</h3>
         <p style="font-size:calc(13px * var(--text-scale)); color:var(--ink-2); margin-top:-6px;">Only the admin account can create other teacher accounts. Accounts created here get full dashboard access but cannot create further teacher accounts themselves.</p>
@@ -865,83 +1046,11 @@
         <div id="teacher-accounts-list" style="margin-top:14px;"></div>
       </div>
 
-      <div class="teacher-section">
-        <h3>Class settings</h3>
-        <div class="settings-grid">
-          <div class="settings-field">
-            <label class="toggle-row"><input type="checkbox" id="setting-allow-retry"> Allow students to retry a case after resolving it</label>
-          </div>
-          <div class="settings-field">
-            <label class="toggle-row"><input type="checkbox" id="setting-show-hints"> Show a hint button during cases</label>
-          </div>
-          <div class="settings-field">
-            <label for="setting-time-limit">Time limit per case (minutes, blank = none)</label>
-            <input type="number" id="setting-time-limit" min="1" placeholder="No limit">
-          </div>
-        </div>
-        <div class="settings-field" id="teacher-ai-section" style="margin:14px 0;">
-          <label style="font-weight:700;">Archivist and practice quiz (AI)</label>
-          <p id="ai-admin-only-note" style="display:none; font-size:calc(12.5px * var(--text-scale)); color:var(--ink-2); margin:4px 0;">Only the admin can change these two settings.</p>
-          <label class="toggle-row"><input type="checkbox" id="setting-ai-enabled"> Let pupils use the Archivist and practice quiz (off by default)</label>
-          <div style="margin-top:8px; max-width:320px;">
-            <label for="setting-ai-limit">AI requests per pupil per day</label>
-            <input type="number" id="setting-ai-limit" min="1" max="50" value="10">
-          </div>
-          <ul class="guardrail-list">
-            <li>Only signed-in pupils, and only for a case they have already finished.</li>
-            <li>The AI sees this case's notes only, so it can't be used as a general chatbot.</li>
-            <li>Questions are capped at 200 characters and obvious "ignore your rules" tricks are refused.</li>
-            <li>Every question and answer is logged below, and pupils can report an answer to you.</li>
-            <li>Nothing the AI does changes points, skill scores or the leaderboard.</li>
-          </ul>
-        </div>
-        <div class="settings-field">
-          <label>Cases assigned to students (unchecked cases are automatically skipped in the unlock sequence)</label>
-          <div class="assign-grid" id="assign-grid"></div>
-        </div>
-        <button class="btn btn-primary" id="btn-save-settings">Save settings</button>
-        <span id="settings-saved-note" style="font-size:calc(12px * var(--text-scale)); color:var(--success); margin-left:10px;"></span>
       </div>
-
-      <div class="teacher-section">
-        <h3>Student roster</h3>
-        <div class="table-scroll">
-          <table class="teacher-table" id="roster-table"></table>
-        </div>
-        <button class="btn btn-secondary" id="btn-export-csv" style="margin-top:14px;">Export results (CSV)</button>
-      </div>
-
-      <div class="teacher-section">
-        <h3>Per-skill mastery, by student</h3>
-        <p style="font-size:calc(13px * var(--text-scale)); color:var(--ink-2); margin-top:-6px;">Cell shows average score across completed cases testing that skill. Cases mapped to standards named in the curriculum design.</p>
-        <div class="table-scroll">
-          <table class="teacher-table" id="skill-matrix-table"></table>
-        </div>
-      </div>
-
-      <div class="teacher-section">
-        <h3>Legacy illustrations</h3>
-        <p style="font-size:calc(13px * var(--text-scale)); color:var(--ink-2); margin-top:-6px;">Add artwork for the case artifacts and civilisation legacies shown throughout the game — paste an image URL, or upload a file (kept under ~1.5MB). Until you add one, pupils see a placeholder box instead. Grouped by case below; any signed-in teacher can manage these, not just admin.</p>
-        <div id="illustrations-manager"></div>
-      </div>
-
-      <div class="teacher-section">
-        <h3>Archivist activity</h3>
-        <p style="font-size:calc(13px * var(--text-scale)); color:var(--ink-2); margin-top:-6px;">The most recent 200 questions and answers. Reported answers are highlighted. Pupils are told you can see what they ask.</p>
-        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
-          <button class="btn btn-secondary" id="btn-refresh-ai-log" type="button">Refresh</button>
-          <button class="btn btn-secondary" id="btn-clear-ai-log" type="button" style="display:none;">Clear log (admin)</button>
-        </div>
-        <div id="ai-log-list"></div>
-      </div>
-
-      <div class="teacher-section">
-        <h3>Teacher walkthrough</h3>
-        <p style="font-size:calc(13px * var(--text-scale)); color:var(--ink-2); margin-top:-6px;">An answer key for every case: each decision, all four answers with their tier and points, the feedback and in-world consequences pupils see, and the knowledge-check answers. Keep it away from pupils.</p>
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <button class="btn btn-secondary" id="btn-print-walkthrough" type="button">Open printable view</button>
-          <button class="btn btn-secondary" id="btn-download-walkthrough" type="button">Download (Markdown)</button>
-        </div>
+      <div id="settings-savebar" role="region" aria-label="Save class settings">
+        <button class="btn btn-primary" id="btn-save-settings" type="button">Save settings</button>
+        <span id="settings-dirty-note"></span>
+        <span id="settings-saved-note" style="font-size:calc(12px * var(--text-scale)); color:var(--success);"></span>
       </div>
 
     </div>
@@ -1048,10 +1157,6 @@
       <div class="field">
         <label for="convert-name">Detective name</label>
         <input id="convert-name" type="text" required>
-      </div>
-      <div class="field">
-        <label for="convert-email">Email</label>
-        <input id="convert-email" type="email" required>
       </div>
       <div class="field">
         <label for="convert-password">Password</label>
@@ -7939,6 +8044,191 @@ const CASES = [
     ]
   }
 ];
+// Case-specific hints: [nudge, pointer to the evidence, guiding question]. Each hint costs HINT_COST points.
+const CASE_HINTS = {
+ "1": [
+  "A king's inscription was made by the king's own court. Think about why a ruler would order words carved in stone.",
+  "Compare what the inscription claims with other records from Ur, such as the tablets that recorded workers and their food.",
+  "If the king was the only builder, who would the ration records show being fed, and for how long?"
+ ],
+ "2": [
+  "Try to see the scale and the feather the way an Egyptian would have, not the way we do today.",
+  "Compare the three sources: who made each one, and what did that person already believe or not know about Egyptian ritual?",
+  "Would an Egyptian priest have called this 'superstition'? What idea about truth and balance might the scene be teaching?"
+ ],
+ "3": [
+  "Both cities have a reason to say they won. Whose account would you trust if nobody had something to gain?",
+  "Look at which source comes from outside the rivalry, then check exactly what it records, such as casualties, tribute and dates.",
+  "Which claims does the neutral inscription actually support, and which claims does it leave unproven?"
+ ],
+ "4": [
+  "Two things happening in the same week may not be linked. What would you need to see to connect them?",
+  "Look for records that show the state of the aqueduct before the collapse, such as repairs, cracks or upkeep.",
+  "What physical reason could make an aqueduct fail, and does anything in the evidence support it more than the timing does?"
+ ],
+ "5": [
+  "Stay with what you can actually see in the ruins: streets, drains and standard sizes. Then ask what they do and do not prove.",
+  "Think about what is missing from the dig site. What would you expect to find if one ruler held total power?",
+  "What does a neat street grid show about planning, and what does it fail to show about who was in charge?"
+ ],
+ "6": [
+  "Before judging the hymn, ask how the people who chanted it thought about their own ritual.",
+  "Notice the word 'precise' in the description. Why might exact wording matter to people who used it?",
+  "If getting the chant exactly right was thought to hold the world in order, would that be 'just superstition' to them?"
+ ],
+ "7": [
+  "A big achievement usually has more than one cause. Try listing what a scholar would need in order to work.",
+  "Look for conditions the kings could provide or that surrounded them, such as support, peace and wealth.",
+  "If a different king had ruled in the same conditions, would the advances still have been possible? What does that suggest?"
+ ],
+ "8": [
+  "Read what the inscription actually lists, not what a visitor expects it to say.",
+  "Look at the kinds of words it uses: names, gifts, land and decisions. What kind of event does that list belong to?",
+  "Does anything in the text mention fighting, and if not, what does the content suggest it recorded instead?"
+ ],
+ "9": [
+  "Ask who paid for the chronicle and who it was written to please.",
+  "Compare the three sources, and look for the one that was never meant to praise or criticise anyone.",
+  "Which source would still exist if the emperor had been only an average ruler, and what does it show about his government?"
+ ],
+ "10": [
+  "Think about who wrote this report and what they might want to leave out.",
+  "Look for what the report does not mention, and for other records that could be checked against it.",
+  "If the Company's own policies affected the famine, would its report be likely to say so? Where else could you look?"
+ ],
+ "11": [
+  "Separate what the bones show from what a student wants them to prove.",
+  "Look at what is actually scratched on the bones: the questions asked and how the cracks were read.",
+  "Does a record of questions being asked show the answers came true, or only that people cared about those questions?"
+ ],
+ "12": [
+  "A single motive is rarely the whole story. Test the pamphlet's claim against more than one kind of evidence.",
+  "Compare the three leads: a later historian's account, the physical site, and the labour records for other state projects.",
+  "If the state used the same system to build canals and walls, what does that say about why the tomb could be built at this scale?"
+ ],
+ "13": [
+  "'Never changed' is a big claim. Look for both things that stayed the same and things that did not.",
+  "Compare early and late ledger entries: which goods appear in both, and what is different about routes or amounts?",
+  "Can something continue and change at the same time? What in the ledger shows each?"
+ ],
+ "14": [
+  "Two states, each saying it won. Who could settle it without any stake in the result?",
+  "Find the source from the state that was not involved, and see what it records about territory and tribute.",
+  "Which side's claim matches the changes the neutral state recorded, and how sure can you be from that alone?"
+ ],
+ "15": [
+  "Ask what readers at a Tang court expected a poem for an emperor to sound like.",
+  "Consider that flowery praise may have been a normal, expected style at court, not a sign that the poem is useless.",
+  "If the flattery is a convention, what can the poem still tell you about court life, even if it is not literal fact?"
+ ],
+ "16": [
+  "Consider who wrote this report and how the trade affected their own income.",
+  "Look for another version of the same events, such as Qing records, to compare with the company's description.",
+  "Would a company that profited from the opium trade describe the conflict in a neutral way? What could you compare it with?"
+ ],
+ "17": [
+  "Most of what we know about Funan was written by outsiders. What could check their descriptions?",
+  "Look for a kind of evidence that comes from the place itself rather than from visitors' writing.",
+  "If Chinese records describe wealth and canals, what could archaeology at the site show that would support or challenge them?"
+ ],
+ "18": [
+  "A 'kingdom' does not have to look like a land empire. Ask how power could work at sea.",
+  "Look at where the evidence is found and what each source describes: oaths, learning and ports, rather than borders.",
+  "If control of the straits mattered more than owning farmland, would fixed borders be the right way to judge this state's importance?"
+ ],
+ "19": [
+  "Careful reading means saying exactly what a carving shows and no more.",
+  "Compare the three leads and note which one shows detail, which one gives a date, and whether they are clearly about the same event.",
+  "Does being near the relief prove that the inscription describes this battle? What would you need to confirm it?"
+ ],
+ "20": [
+  "A court poem was written to celebrate the court. Think about what a long list of places might really mean.",
+  "Consider other ways a state can have influence besides conquering: trade, gifts and alliances.",
+  "If a place is named in the poem, does that show soldiers ruled it, or could it mean something weaker?"
+ ],
+ "21": [
+  "When a source describes a perfect kingdom, it is worth asking why and whether other evidence agrees.",
+  "Look at the disagreement among scholars and at how the script compares with other inscriptions from the same period.",
+  "If no single clue settles the question, what is the honest way for a museum to describe its date and author?"
+ ],
+ "22": [
+  "Each story was told by someone with their own reasons. Look for where different tellers agree.",
+  "Compare the three accounts point by point: which details appear in all of them and which appear in only one?",
+  "If three separate sources agree on the founding but only one mentions the mouse-deer, what can and can't you prove?"
+ ],
+ "28": [
+  "Try to find out what printing actually changed, and what it did not replace.",
+  "Compare the three leads: how many copies could be made, who kept copying by hand, and who bought printed texts.",
+  "If both printing and hand-copying were still used, is 'sudden revolution' or 'just faster copying' the better description?"
+ ],
+ "30": [
+  "Ask what colonists already knew how to do before 1776, and what was genuinely new.",
+  "Compare what the assembly minutes, the pamphlets and the drafting record each show about older habits and new claims.",
+  "Can a document announce new ideas and still leave older problems in place? What in the drafting record suggests this?"
+ ],
+ "32": [
+  "Two guides give two extremes. Look for what changed and what stayed the same in Japan.",
+  "Compare who directed the work, whose skills built it, and what happened to the former samurai.",
+  "If foreign engineers were hired but Japanese officials chose the route, was Japan simply copying the West?"
+ ],
+ "33": [
+  "Test each of Polo's claims separately instead of judging the whole book at once.",
+  "Look at what Chinese records and Persian writers say about the same things, such as paper money, and whether they are independent.",
+  "If independent sources confirm the paper money, what does that say about that claim, and what about the claims nobody else mentions?"
+ ],
+ "34": [
+  "Judge the empire against the standards of its own time, not only against ours.",
+  "Compare the sources: an envoy from a rival empire, ordinary court records, and what happened in Spain in 1492.",
+  "Can a system protect minorities and still treat them unequally? Which parts of your evidence show each?"
+ ],
+ "35": [
+  "Look separately at what changed in 1858 and what carried on as before.",
+  "Compare the proclamation's promises with the district records and with what happened to the army and princely states.",
+  "If revenue collection and officials stayed the same, is 'complete break' or 'only the flag changed' fair?"
+ ],
+ "36": [
+  "The exact words matter here. Read what the Proclamation says it applies to.",
+  "Look at the places it covers and the places it leaves out, and at what it says about Black soldiers.",
+  "If it declared freedom only in areas in rebellion, could it have freed everyone, or nobody? What did it change in practice?"
+ ],
+ "37": [
+  "Two historians each choose one cause. Ask whether either cause was needed on its own.",
+  "Look at the campaign records, the wartime evidence, and other countries that gave the vote without a war.",
+  "If some countries gave women the vote without a war and others fought a war and waited, what does that say about the war as the only cause?"
+ ],
+ "38": [
+  "Different people describe the same mutiny differently. Ask who wrote each account and what they feared.",
+  "Read the inquiry report as the view of officials, and compare it with how the soldiers' religious beliefs and the local press describe events.",
+  "Which causes could fit together, rather than picking one guide's explanation over the other?"
+ ],
+ "39": [
+  "The three accounts were made at different times for different readers. Think about how that affects trust.",
+  "Place each source on a timeline and ask who it was written for: internal use, the public, or a book audience years later.",
+  "Which source was made closest to the events and least likely to mislead its own side, and which need checking against it?"
+ ],
+ "40": [
+  "Big events often have long causes and a final trigger. Try to sort your evidence into those two kinds.",
+  "Look for what had been building for years, what had changed in Moscow's attitude, and what happened on the night itself.",
+  "Would the announcement have opened the Wall if the pressure and the protests had not already been there?"
+ ],
+ "41": [
+  "Ask whether independent sources tell the same story without copying each other.",
+  "Compare the three types of evidence: interviews, price records, and a European map, and note how each is separate from the others.",
+  "If sources that never met all point to great wealth, how far can you trust the claim, and where should a caption stay cautious?"
+ ],
+ "42": [
+  "Read the evidence for what it actually shows and separate proven facts from claims.",
+  "Look at what has been decoded and matched to other records, and what has only been asserted by a later writer.",
+  "If no surviving quipu has been decoded as a story, how should a label describe the claim that they held narratives?"
+ ],
+ "43": [
+  "'Changed everything' and 'nothing changed' are both big claims. Test each against the evidence.",
+  "Compare the Declaration's text with the parish records and with what Olympe de Gouges pointed out.",
+  "Can a law change quickly while daily life changes slowly? Which groups did the new promises reach and which did they miss?"
+ ]
+};
+CASES.forEach(c => { if (CASE_HINTS[c.id]) c.hints = CASE_HINTS[c.id]; });
+
 
 </script>
 <script>
@@ -8144,7 +8434,7 @@ function setPlayerToken(token, email){ sessionStorage.setItem(SESSION_KEY, JSON.
 function clearPlayerToken(){ sessionStorage.removeItem(SESSION_KEY); }
 
 // ---- Global class settings (teacher-controlled), cached locally for sync reads ----
-const DEFAULT_SETTINGS = { allowRetry: true, showHints: true, timeLimitMinutes: null, assignedCaseIds: [], aiEnabled: false, aiDailyLimit: 10 };
+const DEFAULT_SETTINGS = { allowRetry: true, showHints: true, timeLimitMinutes: null, timerMode: 'reminder', assignedCaseIds: [], aiEnabled: false, aiDailyLimit: 10 };
 let cachedSettings = DEFAULT_SETTINGS;
 async function refreshSettingsCache(){
   const result = await apiCall('settings');
@@ -8235,6 +8525,124 @@ const HINTS = {
   'Close reading of primary evidence': "Stick to exactly what this piece of evidence shows — don't add assumptions it doesn't support.",
   'Continuity and change': "Identify specifically what stayed the same and what changed, with evidence for each."
 };
+
+
+// ===================== v5.1 UI HELPERS =====================
+// Select-then-confirm for scored decisions: a tap only selects; the answer is
+// locked when the pupil presses "Lock in answer". The confirm row lives inside
+// the options list so it disappears when the resolution replaces the list.
+function chooseOption(list, btn, commit){
+  if (list.dataset.locked) return;
+  list.querySelectorAll('.option-btn').forEach(b => { b.classList.remove('selected'); b.setAttribute('aria-pressed', 'false'); });
+  btn.classList.add('selected'); btn.setAttribute('aria-pressed', 'true');
+  list._commit = commit;
+  let bar = list.querySelector('.confirm-bar');
+  if (!bar){
+    const li = document.createElement('li');
+    li.className = 'confirm-bar';
+    li.innerHTML = '<button type="button" class="btn btn-primary" data-lock>Lock in answer</button><span>You can change your choice until you lock it in.</span>';
+    list.appendChild(li);
+    li.querySelector('[data-lock]').addEventListener('click', () => {
+      if (list.dataset.locked || !list._commit) return;
+      const go = list._commit; list._commit = null;
+      go();
+    });
+    bar = li;
+  }
+  bar.scrollIntoView({ block: 'nearest' });
+}
+
+// Step tracker shown at the top of every screen inside a case.
+function stepTrackerHtml(c, key){
+  const steps = c.type === 'full'
+    ? [['briefing','Briefing'],['leads','Evidence'],['compare','Compare'],['judgement','Judgement'],['check','Check']]
+    : [['briefing','Briefing'],['decision','Decision'],['check','Check']];
+  const at = steps.findIndex(x => x[0] === key);
+  return `<ol class="steps" aria-label="Case progress">${steps.map((x, i) =>
+    `<li class="${i < at ? 'done' : i === at ? 'current' : ''}"${i === at ? ' aria-current="step"' : ''}><span class="step-dot">${i < at ? '✓' : i + 1}</span><span class="step-label">${x[1]}</span></li>`).join('')}</ol>`;
+}
+
+// Chapters are derived from the review checkpoints (each chapter ends at a checkpoint).
+function chapterList(){
+  let prev = 0;
+  return CHECKPOINTS.map((cp, i) => {
+    const ch = { index: i + 1, start: prev + 1, end: cp.afterOrder, title: cp.title.replace(/ Review$/, '') };
+    prev = cp.afterOrder;
+    return ch;
+  });
+}
+const chapterOpenState = {};
+
+// One-line "what to look for" shown when a reasoning question is missed.
+const SKILL_TEACH = {
+  'Sourcing': 'Sourcing: ask who made this evidence, when, and why. Their purpose and position shape how far you can trust it.',
+  'Contextualization': 'Contextualization: judge people and events by the beliefs, rules and pressures of their own time, not ours.',
+  'Corroboration': 'Corroboration: one source is a claim. Look for independent sources that agree before you rely on it.',
+  'Causation vs. correlation': 'Causation vs. correlation: events that happen together are not automatically linked. Look for a documented mechanism and rule out coincidence.',
+  'Close reading of primary evidence': 'Close reading: stay with what the source actually says. Notice exact wording, and do not add what it does not support.',
+  'Continuity and change': 'Continuity and change: name what stayed the same and what changed, and back each with evidence.'
+};
+
+// ----- Graduated hints (v5.1) -----
+// Level 1 nudges, level 2 points back at the evidence, level 3 poses the skill
+// question. A case can supply its own wording with an optional
+// `hints: ["nudge", "pointer", "question"]` array; anything missing falls back
+// to the skill-level text below.
+const HINT_POINTERS = 'Look back over the evidence you have already seen. Which detail matters most for this skill? The Civilisation briefing and the Glossary are one tap away.';
+const SKILL_QUESTIONS = {
+  'Sourcing': 'Ask yourself: who made this, when, and for whom? What might they want the reader to believe?',
+  'Contextualization': 'Ask yourself: what did people of that time believe or fear, and how would that shape what they wrote or did?',
+  'Corroboration': 'Ask yourself: is there a second, independent source that says the same thing? What would you need to see to be sure?',
+  'Causation vs. correlation': 'Ask yourself: is there a documented link between these events, or did they only happen around the same time?',
+  'Close reading of primary evidence': 'Ask yourself: which exact words or details does the source give me? What am I adding that it does not say?',
+  'Continuity and change': 'Ask yourself: what stayed the same, what changed, and what is my evidence for each?'
+};
+const HINT_COST = 10;   // points lost per hint revealed
+let hintState = { caseId: null, level: 0 };
+function hintTextForLevel(c, level){
+  const own = Array.isArray(c.hints) ? c.hints[level - 1] : null;
+  if (own) return own;
+  if (level === 1) return HINTS[c.skill] || 'Think about what skill this case is asking you to use.';
+  if (level === 2) return HINT_POINTERS;
+  return SKILL_QUESTIONS[c.skill] || 'Ask yourself what evidence supports each choice, and what it leaves out.';
+}
+// Hints only cost points when points are actually at stake: a first attempt
+// by a normal pupil. Replays and the beta tester get them free.
+function hintsCostPoints(c){
+  const acc = currentAccount();
+  if (!acc || acc.isBetaTester) return false;
+  return !(acc.progress[c.id] && acc.progress[c.id].completed);
+}
+function hintPenalty(c){
+  return hintsCostPoints(c) && hintState.caseId === c.id ? hintState.level * HINT_COST : 0;
+}
+function openHintPanel(c){
+  if (hintState.caseId !== c.id) hintState = { caseId: c.id, level: 0 };
+  let panel = document.getElementById('hint-panel');
+  if (panel){ panel.remove(); return; }   // the Hint button toggles the panel; opening it costs nothing
+  panel = document.createElement('div');
+  panel.id = 'hint-panel'; panel.className = 'hint-panel';
+  panel.setAttribute('role', 'region'); panel.setAttribute('aria-label', 'Hints'); panel.setAttribute('aria-live', 'polite');
+  document.querySelector('#case-body .toolbar-row').insertAdjacentElement('afterend', panel);
+  renderHintPanel(c);
+}
+function renderHintPanel(c){
+  const panel = document.getElementById('hint-panel');
+  if (!panel) return;
+  const costs = hintsCostPoints(c);
+  const shown = [];
+  for (let l = 1; l <= hintState.level; l++) shown.push(`<p class="hint-line"><span class="hint-tag">Hint ${l} of 3</span> ${hintTextForLevel(c, l)}</p>`);
+  const next = hintState.level + 1;
+  const costNote = costs ? `<p class="hint-cost">Each hint costs ${HINT_COST} points from this case.${hintState.level ? ` So far: −${hintState.level * HINT_COST}.` : ''}</p>` : '<p class="hint-cost">Hints are free here: you have already finished this case.</p>';
+  panel.innerHTML = costNote + shown.join('') + `<div class="hint-actions">
+      ${next <= 3 ? `<button class="btn btn-secondary" type="button" id="btn-hint-more">Show hint ${next}${costs ? ` (−${HINT_COST} pts)` : ''}</button>` : ''}
+      <button class="btn btn-ghost" type="button" id="btn-hint-close">Hide hints</button></div>`;
+  const more = document.getElementById('btn-hint-more');
+  if (more){
+    more.addEventListener('click', () => { hintState.level++; renderHintPanel(c); const m = document.getElementById('btn-hint-more'); if (m) m.focus(); });
+  }
+  document.getElementById('btn-hint-close').addEventListener('click', () => { panel.remove(); const hb = document.getElementById('btn-hint'); if (hb) hb.focus(); });
+}
 
 const AVATAR_OPTIONS = ['🕵️','🔍','🦉','🐦‍⬛','🎩','🧭','🗝️','📜','🏺','🦊','🐺','🐉'];
 const COLOR_OPTIONS = ['#a5751f','#2e5f5b','#9b3b3b','#4a5a8a','#6b4a8a','#3b7a4f','#8a5a2e','#5a5a5a'];
@@ -8360,7 +8768,7 @@ function newGuestAccount(detectiveName){
 // by the teacher dashboard (via /api/teacher/roster).
 let state = { account: null, currentEmail: null, isGuestSession: false };
 let fullCaseState = { visitedLeads: {} };
-let caseTimerState = { caseId: null, deadline: null, expired: false };
+let caseTimerState = { caseId: null, deadline: null, expired: false, warned: false };
 let currentExpireHandler = null;
 
 function ensureAccountShape(acc){
@@ -8456,16 +8864,16 @@ document.getElementById('form-signup').addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = e.target;
   const name = document.getElementById('signup-name').value.trim();
-  const email = document.getElementById('signup-email').value.trim().toLowerCase();
   const password = document.getElementById('signup-password').value;
   const errEl = document.getElementById('signup-error');
   errEl.textContent = '';
 
-  if (!name || !email || !password){ errEl.textContent = 'Please fill in a detective name, email, and password.'; return; }
+  if (!name || !password){ errEl.textContent = 'Please fill in a detective name and a password.'; return; }
+  if (/[<>&"`]/.test(name)){ errEl.textContent = 'Detective names can\'t include < > & " or ` characters.'; return; }
   if (password.length < 6){ errEl.textContent = 'Password should be at least 6 characters.'; return; }
 
   setBusy(form, true, 'Creating…');
-  const result = await apiCall('player/signup', { method: 'POST', body: { detectiveName: name, email, password } });
+  const result = await apiCall('player/signup', { method: 'POST', body: { detectiveName: name, password } });
   setBusy(form, false);
   if (!result.ok){ errEl.textContent = result.error; return; }
   logInWithAccount(result.data.account, result.data.token);
@@ -8480,7 +8888,7 @@ document.getElementById('form-login').addEventListener('submit', async (e) => {
   const errEl = document.getElementById('login-error');
   errEl.textContent = '';
 
-  if (!idVal || !password){ errEl.textContent = 'Enter your detective name or email, and your password.'; return; }
+  if (!idVal || !password){ errEl.textContent = 'Enter your detective name and your password or PIN.'; return; }
 
   setBusy(form, true, 'Signing in…');
   const playerResult = await apiCall('player/login', { method: 'POST', body: { idValue: idVal, password } });
@@ -8540,7 +8948,7 @@ document.getElementById('btn-teacher-signout').addEventListener('click', () => {
 document.getElementById('btn-convert-guest').addEventListener('click', () => {
   const acc = currentAccount();
   document.getElementById('convert-name').value = acc.detectiveName.startsWith('Guest ') ? '' : acc.detectiveName;
-  document.getElementById('convert-email').value = '';
+  
   document.getElementById('convert-password').value = '';
   document.getElementById('convert-error').textContent = '';
   document.getElementById('convert-overlay').classList.add('active');
@@ -8552,12 +8960,12 @@ document.getElementById('form-convert').addEventListener('submit', async (e) => 
   e.preventDefault();
   const form = e.target;
   const name = document.getElementById('convert-name').value.trim();
-  const email = document.getElementById('convert-email').value.trim().toLowerCase();
   const password = document.getElementById('convert-password').value;
   const errEl = document.getElementById('convert-error');
   errEl.textContent = '';
 
-  if (!name || !email || !password){ errEl.textContent = 'Please fill in a detective name, email, and password.'; return; }
+  if (!name || !password){ errEl.textContent = 'Please fill in a detective name and a password.'; return; }
+  if (/[<>&"`]/.test(name)){ errEl.textContent = 'Detective names can\'t include < > & " or ` characters.'; return; }
   if (password.length < 6){ errEl.textContent = 'Password should be at least 6 characters.'; return; }
 
   const oldAcc = currentAccount();
@@ -8569,7 +8977,7 @@ document.getElementById('form-convert').addEventListener('submit', async (e) => 
   };
 
   setBusy(form, true, 'Creating…');
-  const result = await apiCall('player/signup', { method: 'POST', body: { detectiveName: name, email, password, seed } });
+  const result = await apiCall('player/signup', { method: 'POST', body: { detectiveName: name, password, seed } });
   setBusy(form, false);
   if (!result.ok){ errEl.textContent = result.error; return; }
 
@@ -8656,6 +9064,20 @@ function renderMenu(){
 
   const grid = document.getElementById('case-grid');
   grid.innerHTML = '';
+  grid.className = 'chapter-list';
+  const chapters = chapterList().map(ch => {
+    const det = document.createElement('details');
+    det.className = 'chapter';
+    const inner = document.createElement('div'); inner.className = 'case-grid';
+    det.appendChild(inner);
+    ch.el = det; ch.inner = inner; ch.total = ch.end - ch.start + 1; ch.solved = 0; ch.unlocked = 0;
+    return ch;
+  });
+  let currentOrder = 0;   // first playable, unfinished case
+  CASES.forEach((c, idx) => {
+    const p = acc.progress[c.id];
+    if (!currentOrder && isCaseUnlocked(idx + 1) && !isCaseSkipped(c.id) && !(p && p.completed)) currentOrder = idx + 1;
+  });
   CASES.forEach((c, idx) => {
     const order = idx + 1;
     const unlocked = isCaseUnlocked(order);
@@ -8689,7 +9111,30 @@ function renderMenu(){
       ${statusHtml}
       ${actionHtml}
     `;
-    grid.appendChild(card);
+    const chap = chapters.find(ch => order >= ch.start && order <= ch.end) || chapters[chapters.length - 1];
+    chap.inner.appendChild(card);
+    if (completed) chap.solved++;
+    if (unlocked) chap.unlocked++;
+  });
+  if (currentOrder){
+    const cc = CASES[currentOrder - 1];
+    const cont = document.createElement('div');
+    cont.className = 'continue-card';
+    cont.innerHTML = `<div><span class="cc-eyebrow">Continue</span><strong>Case ${currentOrder}: ${cc.title}</strong><span class="cc-sub">${cc.civ}</span></div>
+      <button class="btn btn-primary case-open-btn" data-id="${cc.id}">Continue</button>`;
+    grid.appendChild(cont);
+  }
+  chapters.forEach(ch => {
+    const sum = document.createElement('summary');
+    const locked = ch.unlocked === 0;
+    sum.innerHTML = `<span class="ch-title">Chapter ${ch.index}: ${ch.title}</span>
+      <span class="ch-meta">${locked ? '🔒 Locked' : ch.solved + ' of ' + ch.total + ' solved'}</span>
+      <span class="ch-bar" aria-hidden="true"><span style="width:${Math.round(ch.solved / ch.total * 100)}%"></span></span>`;
+    ch.el.insertBefore(sum, ch.el.firstChild);
+    const inCurrent = currentOrder >= ch.start && currentOrder <= ch.end;
+    ch.el.open = (ch.index in chapterOpenState) ? chapterOpenState[ch.index] : inCurrent;
+    sum.addEventListener('click', () => setTimeout(() => { chapterOpenState[ch.index] = ch.el.open; }, 0));
+    grid.appendChild(ch.el);
   });
 
   grid.querySelectorAll('.case-open-btn').forEach(btn => {
@@ -8816,12 +9261,16 @@ async function renderTeacherDashboard(){
   document.getElementById('teacher-session-label').textContent =
     teacherSession.username + (isAdmin ? ' (admin)' : ' (teacher)');
   document.getElementById('teacher-accounts-section').style.display = isAdmin ? 'block' : 'none';
+  document.getElementById('tab-t-admin').style.display = isAdmin ? '' : 'none';
+  selectTeacherTab('class');
+  clearSettingsDirty();
   if (isAdmin) renderTeacherAccountsList();
 
   const s = getSettings();
   document.getElementById('setting-allow-retry').checked = !!s.allowRetry;
   document.getElementById('setting-show-hints').checked = !!s.showHints;
   document.getElementById('setting-time-limit').value = s.timeLimitMinutes || '';
+  document.getElementById('setting-timer-mode').value = s.timerMode === 'strict' ? 'strict' : 'reminder';
   renderAiTeacherControls();
   loadAiLog();
 
@@ -9000,15 +9449,118 @@ document.getElementById('btn-save-settings').addEventListener('click', async () 
 
   const note = document.getElementById('settings-saved-note');
   note.textContent = 'Saving…';
-  const settingsPayload = { allowRetry, showHints, timeLimitMinutes, assignedCaseIds };
+  const settingsPayload = { allowRetry, showHints, timeLimitMinutes, timerMode: document.getElementById('setting-timer-mode').value, assignedCaseIds };
   if (teacherSession && teacherSession.role === 'admin'){
     settingsPayload.aiEnabled = document.getElementById('setting-ai-enabled').checked;
     settingsPayload.aiDailyLimit = Math.min(50, Math.max(1, parseInt(document.getElementById('setting-ai-limit').value, 10) || 10));
   }
   const result = await saveSettingsRemote(settingsPayload);
   note.textContent = result.ok ? 'Saved.' : `Couldn't save (${result.error}).`;
+  if (result.ok) clearSettingsDirty();
   setTimeout(() => { note.textContent = ''; }, 2500);
 });
+
+
+// ===================== TEACHER DASHBOARD TABS + BULK SET-UP (v5.1) =====================
+const TEACHER_TABS = ['class', 'cases', 'settings', 'archivist', 'admin'];
+function selectTeacherTab(name){
+  TEACHER_TABS.forEach(t => {
+    const btn = document.getElementById('tab-t-' + t), panel = document.getElementById('panel-t-' + t);
+    const on = t === name;
+    btn.setAttribute('aria-selected', on ? 'true' : 'false');
+    btn.tabIndex = on ? 0 : -1;
+    panel.classList.toggle('active', on);
+  });
+  // The save bar belongs to the two tabs that hold saved-together settings.
+  document.getElementById('settings-savebar').classList.toggle('visible', name === 'cases' || name === 'settings');
+}
+document.querySelectorAll('.teacher-tab').forEach(btn => {
+  btn.addEventListener('click', () => selectTeacherTab(btn.dataset.tab));
+  btn.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    const visible = [...document.querySelectorAll('.teacher-tab')].filter(b => b.style.display !== 'none');
+    const i = visible.indexOf(btn);
+    const next = visible[(i + (e.key === 'ArrowRight' ? 1 : visible.length - 1)) % visible.length];
+    selectTeacherTab(next.dataset.tab); next.focus();
+  });
+});
+function markSettingsDirty(){ document.getElementById('settings-dirty-note').textContent = 'Unsaved changes'; }
+function clearSettingsDirty(){ document.getElementById('settings-dirty-note').textContent = ''; }
+['panel-t-settings', 'assign-grid'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', markSettingsDirty);
+  el.addEventListener('change', markSettingsDirty);
+});
+
+function escHtml(v){ return String(v).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch])); }
+
+let bulkLastResults = [];
+document.getElementById('btn-bulk-create').addEventListener('click', async () => {
+  const errEl = document.getElementById('bulk-error');
+  const prog = document.getElementById('bulk-progress');
+  const out = document.getElementById('bulk-results');
+  errEl.textContent = ''; out.innerHTML = '';
+  const suffix = document.getElementById('bulk-suffix').value.trim();
+  const mode = document.querySelector('input[name="bulk-mode"]:checked').value;
+  const names = document.getElementById('bulk-names').value.split(/[\n,;]+/).map(n => n.trim()).filter(Boolean).map(n => suffix ? n + ' ' + suffix : n);
+  if (!names.length){ errEl.textContent = 'Add at least one name.'; return; }
+  if (names.length > 200){ errEl.textContent = 'Please add up to 200 names at a time.'; return; }
+  if (names.some(n => /[<>&"`]/.test(n))){ errEl.textContent = 'Names can\'t include < > & " or ` characters.'; return; }
+
+  const btn = document.getElementById('btn-bulk-create');
+  btn.disabled = true;
+  const results = [];
+  const BATCH = 10;   // small batches: each account needs a password hash
+  for (let i = 0; i < names.length; i += BATCH){
+    prog.textContent = `Creating ${Math.min(i + BATCH, names.length)} of ${names.length}…`;
+    const r = await apiCall('teacher/bulk-create', { method: 'POST', token: getTeacherToken(), body: { names: names.slice(i, i + BATCH), mode } });
+    if (!r.ok){ errEl.textContent = `Stopped after ${results.length} names: ${r.error}`; break; }
+    results.push(...r.data.results);
+  }
+  btn.disabled = false;
+  prog.textContent = '';
+  bulkLastResults = results;
+  renderBulkResults();
+  const roster = await apiCall('teacher/roster', { token: teacherSession.token });
+  if (roster.ok){ teacherRosterCache = roster.data.players; renderRosterTable(); renderSkillMatrix(); }
+});
+
+function renderBulkResults(){
+  const out = document.getElementById('bulk-results');
+  const made = bulkLastResults.filter(r => r.status === 'created');
+  const skipped = bulkLastResults.length - made.length;
+  if (!bulkLastResults.length){ out.innerHTML = ''; return; }
+  out.innerHTML = `
+    <p><strong>${made.length}</strong> created${skipped ? `, <strong>${skipped}</strong> skipped` : ''}. ${made.length ? 'Save these codes now — they can\'t be shown again.' : ''}</p>
+    <div class="table-scroll"><table class="teacher-table"><thead><tr><th>Detective</th><th>Sign-in code</th><th>Result</th></tr></thead><tbody>
+      ${bulkLastResults.map(r => `<tr><td>${escHtml(r.name)}</td><td>${r.credential ? `<span class="bulk-code">${escHtml(r.credential)}</span>` : '—'}</td>
+        <td class="bulk-status-${r.status}">${r.status === 'created' ? 'Created' : escHtml(r.note || r.status)}</td></tr>`).join('')}
+    </tbody></table></div>
+    ${made.length ? `<div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+      <button class="btn btn-secondary" type="button" id="btn-bulk-copy">Copy list</button>
+      <button class="btn btn-secondary" type="button" id="btn-bulk-csv">Download CSV</button>
+      <button class="btn btn-secondary" type="button" id="btn-bulk-print">Print slips</button></div>
+      <span id="bulk-copy-note" role="status" style="font-size:calc(12.5px * var(--text-scale));"></span>` : ''}`;
+  if (!made.length) return;
+  document.getElementById('btn-bulk-copy').addEventListener('click', async () => {
+    const text = made.map(r => r.name + '\t' + r.credential).join('\n');
+    try { await navigator.clipboard.writeText(text); document.getElementById('bulk-copy-note').textContent = 'Copied.'; }
+    catch (e) { document.getElementById('bulk-copy-note').textContent = 'Couldn\'t copy automatically — use Download CSV instead.'; }
+  });
+  document.getElementById('btn-bulk-csv').addEventListener('click', () => {
+    const csv = 'Detective,Sign-in code\n' + made.map(r => csvEscape(r.name) + ',' + csvEscape(r.credential)).join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    const a = document.createElement('a'); a.href = url; a.download = 'time-detectives-class-codes.csv';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+  document.getElementById('btn-bulk-print').addEventListener('click', () => {
+    const w = window.open('', '_blank');
+    if (!w) return;
+    w.document.write(`<!doctype html><title>Sign-in slips</title><style>body{font-family:sans-serif;margin:16px} .s{display:inline-block;width:46%;margin:6px 1%;padding:12px;border:1px dashed #666;box-sizing:border-box;page-break-inside:avoid} b{font-size:22px;letter-spacing:.08em}</style>
+      ${made.map(r => `<div class="s">Time Detectives<br>Detective name: <strong>${escHtml(r.name)}</strong><br>${r.isPin ? 'PIN' : 'Password'}: <b>${escHtml(r.credential)}</b><br><small>Keep this private.</small></div>`).join('')}`);
+    w.document.close(); setTimeout(() => { try { w.focus(); w.print(); } catch (e) {} }, 300);
+  });
+}
 
 function studentAccounts(){
   return teacherRosterCache;
@@ -9041,9 +9593,9 @@ function renderRosterTable(){
   let rows = students.map(a => {
     const completed = Object.values(a.progress).filter(p => p.completed).length;
     const contentPct = computeContentMasteryOverall(a);
-    return `<tr><td>${a.detectiveName}</td><td>${a.email}</td><td>${a.points}</td><td>${completed} / ${CASES.length}</td><td>${a.trophies.length}</td><td>${contentPct === null ? '—' : contentPct + '%'}</td><td>${formatLastActive(a.updatedAt)}</td><td><button class="btn btn-ghost btn-manage-student" type="button" data-email="${a.email}" style="font-size:calc(12px * var(--text-scale)); padding:4px 10px;">Manage</button></td></tr>`;
+    return `<tr><td>${a.detectiveName}</td><td>${a.points}</td><td>${completed} / ${CASES.length}</td><td>${a.trophies.length}</td><td>${contentPct === null ? '—' : contentPct + '%'}</td><td>${formatLastActive(a.updatedAt)}</td><td><button class="btn btn-ghost btn-manage-student" type="button" data-email="${a.email}" style="font-size:calc(12px * var(--text-scale)); padding:4px 10px;">Manage</button></td></tr>`;
   }).join('');
-  table.innerHTML = `<thead><tr><th>Detective</th><th>Email</th><th>Points</th><th>Cases completed</th><th>Trophies</th><th>Content knowledge</th><th>Last active</th><th></th></tr></thead><tbody>${rows}</tbody>`;
+  table.innerHTML = `<thead><tr><th>Detective</th><th>Points</th><th>Cases completed</th><th>Trophies</th><th>Content knowledge</th><th>Last active</th><th></th></tr></thead><tbody>${rows}</tbody>`;
   table.querySelectorAll('.btn-manage-student').forEach(btn => {
     btn.addEventListener('click', () => openManageStudent(btn.dataset.email));
   });
@@ -9074,14 +9626,14 @@ function renderSkillMatrix(){
 document.getElementById('btn-export-csv').addEventListener('click', () => {
   const students = studentAccounts();
   const skills = allSkills();
-  const header = ['Detective', 'Email', 'Total points', 'Cases completed', 'Trophies', 'Content knowledge %', 'Last active', ...skills.map(s => s + ' (avg %)'), ...CHECKPOINTS.map(cp => cp.title + ' quiz')];
+  const header = ['Detective', 'Total points', 'Cases completed', 'Trophies', 'Content knowledge %', 'Last active', ...skills.map(s => s + ' (avg %)'), ...CHECKPOINTS.map(cp => cp.title + ' quiz')];
   const lines = [header.join(',')];
   students.forEach(a => {
     const completed = Object.values(a.progress).filter(p => p.completed).length;
     const mastery = computeSkillMastery(a);
     const contentPct = computeContentMasteryOverall(a);
     const row = [
-      csvEscape(a.detectiveName), csvEscape(a.email), a.points, completed, a.trophies.length,
+      csvEscape(a.detectiveName), a.points, completed, a.trophies.length,
       contentPct === null ? '' : contentPct,
       a.updatedAt ? new Date(a.updatedAt).toISOString() : '',
       ...skills.map(s => mastery[s].completedCases ? mastery[s].avgPercent : ''),
@@ -9115,21 +9667,31 @@ function renderManageStudent(acc){
     const p = acc.progress[id];
     if (!c || !p) return '';
     return `<div class="manage-case-row" data-case-id="${id}">
-      <span>Case ${id}: ${c.civ} <span style="color:var(--ink-2);">(${p.tier}, ${p.points} pts)</span></span>
+      <span>Case ${id}: ${c.civ} <span style="color:var(--ink-2);">(${p.tier}, ${p.points} pts${p.hints ? ', ' + p.hints + ' hint' + (p.hints > 1 ? 's' : '') : ''})</span></span>
       <button class="btn btn-ghost btn-reset-case" type="button" data-case-id="${id}" style="font-size:calc(12px * var(--text-scale)); padding:4px 10px;">Reset</button>
     </div>`;
   }).join('');
 
   content.innerHTML = `
     <p style="font-size:calc(13px * var(--text-scale)); color:var(--ink-2); margin-top:-8px;">
-      ${acc.detectiveName} &middot; ${acc.email} &middot; last active ${formatLastActive(acc.updatedAt)}
+      ${acc.detectiveName} &middot; last active ${formatLastActive(acc.updatedAt)}
     </p>
 
     <div class="teacher-section" style="border:none; padding:0; margin-top:10px;">
       <p style="font-weight:700; font-size:calc(13.5px * var(--text-scale)); margin-bottom:4px;">Password</p>
       <p style="font-size:calc(12.5px * var(--text-scale)); color:var(--ink-2); margin-top:0;">Generates a new temporary password and shows it here so you can pass it to the pupil. They can change it later from Customize.</p>
       <button class="btn btn-secondary" type="button" id="btn-reset-password">Reset password</button>
+      <button class="btn btn-secondary" type="button" id="btn-reset-pin">Reset to 4-digit PIN</button>
       <div id="reset-password-result" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="teacher-section" style="border:none; padding:0; margin-top:16px;">
+      <p style="font-weight:700; font-size:calc(13.5px * var(--text-scale)); margin-bottom:4px;">Extra time per case</p>
+      <p style="font-size:calc(12.5px * var(--text-scale)); color:var(--ink-2); margin-top:0;">Added to the class time limit for this pupil only. Has no effect if no time limit is set.</p>
+      <label for="extra-time-input" class="sr-only">Extra minutes</label>
+      <input type="number" id="extra-time-input" min="0" max="60" value="${acc.extraTimeMinutes || 0}" style="width:80px;"> minutes
+      <button class="btn btn-secondary" type="button" id="btn-save-extra-time" style="margin-left:8px;">Save</button>
+      <span id="extra-time-note" role="status" style="margin-left:8px; font-size:calc(12.5px * var(--text-scale));"></span>
     </div>
 
     <div class="teacher-section" style="border:none; padding:0; margin-top:16px;">
@@ -9139,13 +9701,26 @@ function renderManageStudent(acc){
     </div>
   `;
 
-  document.getElementById('btn-reset-password').addEventListener('click', async () => {
-    if (!confirm(`Generate a new temporary password for ${acc.detectiveName}? Their current password will stop working immediately.`)) return;
-    const result = await apiCall('teacher/reset-password', { method: 'POST', token: getTeacherToken(), body: { email: acc.email } });
+  const doReset = async (mode) => {
+    if (!confirm(`Generate a new temporary ${mode === 'pin' ? 'PIN' : 'password'} for ${acc.detectiveName}? Their current sign-in will stop working immediately.`)) return;
+    const result = await apiCall('teacher/reset-password', { method: 'POST', token: getTeacherToken(), body: { email: acc.email, mode } });
     const out = document.getElementById('reset-password-result');
     if (!result.ok){ out.innerHTML = `<p class="form-error">${result.error}</p>`; return; }
-    out.innerHTML = `<p style="font-size:calc(13px * var(--text-scale));">Temporary password for <strong>${result.data.detectiveName}</strong>: <code style="background:var(--parchment-2); padding:2px 8px; border-radius:4px; font-size:calc(14px * var(--text-scale));">${result.data.tempPassword}</code></p>
+    out.innerHTML = `<p style="font-size:calc(13px * var(--text-scale));">Temporary ${result.data.isPin ? 'PIN' : 'password'} for <strong>${result.data.detectiveName}</strong>: <code style="background:var(--parchment-2); padding:2px 8px; border-radius:4px; font-size:calc(14px * var(--text-scale));">${result.data.tempPassword}</code></p>
       <p style="font-size:calc(12px * var(--text-scale)); color:var(--ink-2);">Give this to the pupil now — it won't be shown again. They can sign in with it right away.</p>`;
+  };
+  document.getElementById('btn-reset-password').addEventListener('click', () => doReset('password'));
+  document.getElementById('btn-reset-pin').addEventListener('click', () => doReset('pin'));
+
+  document.getElementById('btn-save-extra-time').addEventListener('click', async () => {
+    const mins = Math.max(0, Math.min(60, parseInt(document.getElementById('extra-time-input').value, 10) || 0));
+    const note = document.getElementById('extra-time-note');
+    const result = await apiCall('teacher/extra-time', { method: 'POST', token: getTeacherToken(), body: { email: acc.email, minutes: mins } });
+    if (!result.ok){ note.textContent = result.error; return; }
+    const idx = teacherRosterCache.findIndex(a => a.email === acc.email);
+    if (idx !== -1) teacherRosterCache[idx] = result.data.account;
+    acc.extraTimeMinutes = result.data.account.extraTimeMinutes;
+    note.textContent = mins ? `Saved: +${mins} min.` : 'Saved: no extra time.';
   });
 
   content.querySelectorAll('.btn-reset-case').forEach(btn => {
@@ -9173,28 +9748,51 @@ function csvEscape(str){
 }
 
 // ===================== TIMER =====================
-function clearCaseTimer(){ caseTimerState = { caseId: null, deadline: null, expired: false }; currentExpireHandler = null; }
+function clearCaseTimer(){ caseTimerState = { caseId: null, deadline: null, expired: false, warned: false }; currentExpireHandler = null; }
 function startCaseTimer(c){
   const s = getSettings();
-  if (currentAccount() && currentAccount().isBetaTester || !s.timeLimitMinutes){ caseTimerState = { caseId: c.id, deadline: null, expired: false }; return; }
-  caseTimerState = { caseId: c.id, deadline: Date.now() + s.timeLimitMinutes * 60000, expired: false };
+  const acc = currentAccount();
+  if (acc && acc.isBetaTester || !s.timeLimitMinutes){ caseTimerState = { caseId: c.id, deadline: null, expired: false, warned: false }; return; }
+  const extra = acc && acc.extraTimeMinutes ? acc.extraTimeMinutes : 0;   // set by the teacher, per pupil
+  caseTimerState = { caseId: c.id, deadline: Date.now() + (s.timeLimitMinutes + extra) * 60000, expired: false, warned: false };
+}
+function announceTimer(msg){
+  const live = document.getElementById('timer-live');
+  if (live) live.textContent = msg;
 }
 setInterval(() => {
   const badge = document.getElementById('case-timer-badge');
   if (!caseTimerState.deadline){ if (badge) badge.textContent = ''; return; }
   const remaining = caseTimerState.deadline - Date.now();
+  const strict = getSettings().timerMode === 'strict';
   if (badge){
+    badge.classList.toggle('timer-low', remaining > 0 && remaining <= 60000);
     if (remaining > 0){
       const mm = Math.floor(remaining / 60000);
       const ss = Math.floor((remaining % 60000) / 1000).toString().padStart(2, '0');
       badge.textContent = '⏱ ' + mm + ':' + ss;
     } else {
-      badge.textContent = '⏱ 0:00';
+      badge.textContent = strict ? '⏱ Time is up' : '⏱ No rush. Finish when ready';
     }
+  }
+  if (remaining <= 60000 && remaining > 0 && !caseTimerState.warned){
+    caseTimerState.warned = true;
+    announceTimer('One minute left.');
   }
   if (remaining <= 0 && !caseTimerState.expired){
     caseTimerState.expired = true;
-    if (currentExpireHandler){ const h = currentExpireHandler; currentExpireHandler = null; h(); }
+    if (!strict){
+      announceTimer('Time is up, but you can keep going. Nothing is submitted automatically.');
+      return;   // reminder mode: never auto-resolve
+    }
+    if (currentExpireHandler){
+      const h = currentExpireHandler; currentExpireHandler = null;
+      // If the pupil had selected an answer but not yet locked it in, lock THAT in
+      // rather than treating the step as passive.
+      const list = document.getElementById('options-list');
+      if (list && list._commit && !list.dataset.locked){ const go = list._commit; list._commit = null; go(); }
+      else h();
+    }
   }
 }, 1000);
 
@@ -9205,6 +9803,7 @@ function toolbarHtml(c, includeTimer){
   const s = getSettings();
   return `
     <div class="toolbar-row">
+      <span id="timer-live" class="sr-only" role="status" aria-live="polite"></span>
       <button class="btn btn-secondary" id="btn-glossary">📖 Glossary</button>
       <button class="btn btn-secondary briefing-recap-btn" id="btn-briefing-recap">🏛️ Civilisation briefing</button>
       ${(s.showHints || (currentAccount() && currentAccount().isBetaTester)) ? `<button class="btn btn-secondary" id="btn-hint">💡 Hint</button>` : ''}
@@ -9220,9 +9819,7 @@ function bindToolbar(c){
   if (b) b.addEventListener('click', () => renderLegacyBriefing(c));
   bindArchivistButtons(document.getElementById('case-body'));
   const h = document.getElementById('btn-hint');
-  if (h) h.addEventListener('click', () => {
-    alert(HINTS[c.skill] || 'Think carefully about what the target skill for this case is asking you to check.');
-  });
+  if (h) h.addEventListener('click', () => openHintPanel(c));
 }
 
 function shuffle(arr){
@@ -9237,6 +9834,7 @@ function openCase(id){
   const prog = acc.progress[id];
   const settings = getSettings();
   fullCaseState = { visitedLeads: {} };
+  hintState = { caseId: null, level: 0 };
   startCaseTimer(c);
   updateCasePoints();
 
@@ -9256,6 +9854,7 @@ function renderLegacyBriefing(c){
   const body = document.getElementById('case-body');
   const b = c.legacyBriefing;
   body.innerHTML = `
+    ${stepTrackerHtml(c,'briefing')}
     <div class="case-header">
       <div class="eyebrow">Case ${order} of ${CASES.length} · ${c.civ}</div>
       <h2>Legacy briefing</h2>
@@ -9288,6 +9887,7 @@ function renderSimpleDecision(c){
   const order = CASES.findIndex(x => x.id === c.id) + 1;
   const body = document.getElementById('case-body');
   body.innerHTML = `
+    ${stepTrackerHtml(c,'decision')}
     <div class="case-header">
       <div class="eyebrow">Case ${order} of ${CASES.length} · ${c.civ}</div>
       <h2>${c.title}</h2>
@@ -9307,10 +9907,11 @@ function renderSimpleDecision(c){
     const btn = document.createElement('button');
     btn.className = 'option-btn'; btn.type = 'button'; btn.textContent = opt.text;
     btn.addEventListener('click', () => {
-      if (list.dataset.locked) return; // guards against a fast double-tap firing two resolutions
-      list.dataset.locked = 'true';
-      currentExpireHandler = null;
-      resolveSimpleDecision(c, i);
+      chooseOption(list, btn, () => {
+        list.dataset.locked = 'true';
+        currentExpireHandler = null;
+        resolveSimpleDecision(c, i);
+      });
     });
     li.appendChild(btn); list.appendChild(li);
   });
@@ -9341,18 +9942,22 @@ function recordOutcomeSeen(c, tier){
   persist();
 }
 
+let lastAwardPenalty = 0;   // hint cost taken off the most recent award, shown on the resolution card
 function awardCaseCompletion(c, tier){
   const acc = currentAccount();
   const alreadyCompleted = acc.progress[c.id] && acc.progress[c.id].completed;
-  const points = TIER_POINTS[tier];
+  const penalty = hintPenalty(c);
+  lastAwardPenalty = alreadyCompleted ? 0 : Math.min(penalty, TIER_POINTS[tier]);
+  const points = Math.max(0, TIER_POINTS[tier] - penalty);
   if (!alreadyCompleted){
     acc.progress[c.id] = { completed: true, tier: tier, points: points };
+    if (hintState.caseId === c.id && hintState.level > 0) acc.progress[c.id].hints = hintState.level;   // most hints opened, 1-3
     acc.points += points;
     if (tier === 'ideal' && !acc.trophies.includes(c.id)) acc.trophies.push(c.id);
   }
   if (!acc.atlasUnlocked.includes(c.id)) acc.atlasUnlocked.push(c.id); // Atlas unlocks on ANY completion, any tier
   persist();
-  return { alreadyCompleted, points };
+  return { alreadyCompleted, points, penalty };
 }
 
 function renderResolution(c, opt, alreadyCompleted, pointsAwarded, timedOut, onContinue){
@@ -9360,11 +9965,11 @@ function renderResolution(c, opt, alreadyCompleted, pointsAwarded, timedOut, onC
   const resDiv = document.createElement('div');
   resDiv.className = 'resolution-card tier-' + opt.tier;
   resDiv.innerHTML = `
-    ${timedOut ? '<p style="font-weight:700; margin-top:0;">Time ran out — this step was automatically resolved as passive/avoidant.</p>' : ''}
+    ${timedOut ? '<p style="font-weight:700; margin-top:0;">Time ran out, so this step was submitted for you. Your teacher can let you try the case again.</p>' : ''}
     <div class="resolution-tier-label">${TIER_LABEL[opt.tier]}</div>
     <p>${opt.resolution}</p>
     ${consequenceHtml(opt)}
-    <div class="resolution-points">${alreadyCompleted ? 'Reviewed — no new points (already completed).' : '+' + pointsAwarded + ' points earned'}</div>
+    <div class="resolution-points">${alreadyCompleted ? 'Reviewed — no new points (already completed).' : '+' + pointsAwarded + ' points earned' + (lastAwardPenalty ? ` (${TIER_POINTS[opt.tier]} − ${lastAwardPenalty} for hints)` : '')}</div>
   `;
   const oldList = document.getElementById('options-list');
   if (oldList) oldList.replaceWith(resDiv); else body.appendChild(resDiv);
@@ -9393,6 +9998,7 @@ function renderFullLeadsMenu(c){
   const visitedCount = c.leads.filter(l => fullCaseState.visitedLeads[l.id]).length;
   const allVisited = visitedCount === c.leads.length;
   body.innerHTML = `
+    ${stepTrackerHtml(c,'leads')}
     <div class="case-header">
       <div class="eyebrow">Case ${order} of ${CASES.length} · ${c.civ}</div>
       <h2>${c.title}</h2>
@@ -9434,6 +10040,7 @@ function renderLeadDecision(c, lead){
   const body = document.getElementById('case-body');
   const order = CASES.findIndex(x => x.id === c.id) + 1;
   body.innerHTML = `
+    ${stepTrackerHtml(c,'leads')}
     <div class="case-header">
       <div class="eyebrow">Case ${order} of ${CASES.length} · ${c.civ} — ${lead.label}</div>
       <h2>${c.title}</h2>
@@ -9476,6 +10083,7 @@ function renderConvergeDecision(c){
   const order = CASES.findIndex(x => x.id === c.id) + 1;
   const body = document.getElementById('case-body');
   body.innerHTML = `
+    ${stepTrackerHtml(c,'compare')}
     <div class="case-header">
       <div class="eyebrow">Case ${order} of ${CASES.length} · ${c.civ} — Comparing accounts</div>
       <h2>${c.title}</h2>
@@ -9516,6 +10124,7 @@ function renderFinalDecision(c){
   const order = CASES.findIndex(x => x.id === c.id) + 1;
   const body = document.getElementById('case-body');
   body.innerHTML = `
+    ${stepTrackerHtml(c,'judgement')}
     <div class="case-header">
       <div class="eyebrow">Case ${order} of ${CASES.length} · ${c.civ} — Final judgement</div>
       <h2>${c.title}</h2>
@@ -9533,10 +10142,11 @@ function renderFinalDecision(c){
     const btn = document.createElement('button');
     btn.className = 'option-btn'; btn.type = 'button'; btn.textContent = opt.text;
     btn.addEventListener('click', () => {
-      if (list.dataset.locked) return;
-      list.dataset.locked = 'true';
-      currentExpireHandler = null;
-      resolveFinalDecision(c, i);
+      chooseOption(list, btn, () => {
+        list.dataset.locked = 'true';
+        currentExpireHandler = null;
+        resolveFinalDecision(c, i);
+      });
     });
     li.appendChild(btn); list.appendChild(li);
   });
@@ -9577,35 +10187,31 @@ function shuffleQuestionOptions(q){
 
 function renderKnowledgeCheck(c){
   const body = document.getElementById('case-body');
-  // IMPORTANT: fully clear the case body before rendering, same as every
-  // other screen transition in the case flow. Without this, the previous
-  // screen's "Continue" button (from renderResolution) stayed alive in the
-  // DOM underneath the knowledge check — a stray extra tap on it (easy to
-  // do on a tablet, since the screen auto-scrolls right after that tap)
-  // would silently re-run this function and stack a second, blank copy of
-  // the knowledge check, which looked like it had "relaunched".
-  body.innerHTML = '';
+  body.innerHTML = '';   // fully clear: no stale buttons from the previous step
+  body.insertAdjacentHTML('beforeend', stepTrackerHtml(c, 'check'));
+  const acc = currentAccount();
+  if (!acc.contentMastery[c.id]) acc.contentMastery[c.id] = { correct: 0, total: 0 };
 
-  const card = document.createElement('div');
-  card.className = 'kc-card';
-  card.innerHTML = `<h3 style="font-family:var(--font-display); font-weight:400; margin-top:0;">Knowledge check</h3>
-    <p style="font-size:calc(13px * var(--text-scale)); color:var(--ink-2); margin-top:-6px;">Answer every question below before you continue.</p>
-    <div class="kc-section-label">Reasoning check</div>`;
+  const items = [
+    ...c.knowledgeCheck.map(q => ({ q, kind: 'reasoning' })),
+    ...(c.contentCheck || []).map(q => ({ q, kind: 'content' }))
+  ];
+  let idx = 0, right = 0;
+  const card = document.createElement('div'); card.className = 'kc-card';
+  const actions = document.createElement('div'); actions.className = 'case-actions';
+  body.appendChild(card); body.appendChild(actions);
 
-  const totalQuestions = c.knowledgeCheck.length + (c.contentCheck || []).length;
-  let answeredCount = 0;
-
-  function buildQuestion(q, qi, onAnswered){
-    // Shuffle the option order fresh on every render (see
-    // shuffleQuestionOptions above) so the correct answer isn't sitting in
-    // a memorisable position — this returns a new object and never touches
-    // the original question data, so the same case still shuffles
-    // differently the next time a pupil (or a different pupil) plays it.
-    q = shuffleQuestionOptions(q);
-    const qDiv = document.createElement('div');
-    qDiv.className = 'kc-q';
-    qDiv.innerHTML = `<p>${qi + 1}. ${q.q}</p>`;
-    const optWrap = document.createElement('div');
+  function showQuestion(){
+    const item = items[idx];
+    const q = shuffleQuestionOptions(item.q);   // fresh option order every time
+    card.innerHTML = `
+      <div class="kc-progress">Question ${idx + 1} of ${items.length}</div>
+      <div class="kc-bar" aria-hidden="true"><span style="width:${Math.round(idx / items.length * 100)}%"></span></div>
+      <div class="kc-section-label">${item.kind === 'reasoning' ? 'Reasoning check' : 'Know your history'}</div>
+      <div class="kc-q"><p id="kc-qtext" tabindex="-1">${q.q}</p><div id="kc-opts" role="group" aria-labelledby="kc-qtext"></div></div>
+      <div id="kc-teach" aria-live="polite"></div>`;
+    actions.innerHTML = '';
+    const optWrap = card.querySelector('#kc-opts');
     q.options.forEach((optText, oi) => {
       const optBtn = document.createElement('button');
       optBtn.type = 'button'; optBtn.className = 'kc-opt'; optBtn.textContent = optText;
@@ -9614,73 +10220,46 @@ function renderKnowledgeCheck(c){
         optWrap.dataset.answered = 'true';
         const correct = oi === q.correct;
         optBtn.classList.add(correct ? 'correct' : 'incorrect');
-        if (!correct){ [...optWrap.children].find((el, idx) => idx === q.correct)?.classList.add('correct'); }
-        const fb = document.createElement('div');
-        fb.className = 'kc-feedback';
-        fb.textContent = correct ? 'Correct.' : 'Not quite — the highlighted answer is correct.';
-        optWrap.appendChild(fb);
-        if (onAnswered) onAnswered(correct);
-        answeredCount++;
-        updateBackButtonState();
+        optWrap.children[q.correct].classList.add('correct');
+        if (correct) right++;
+        if (item.kind === 'content'){
+          acc.contentMastery[c.id].total++;
+          if (correct) acc.contentMastery[c.id].correct++;
+          persist();
+        }
+        const why = item.q.why ? `<p>${item.q.why}</p>` : '';
+        const tip = (!correct && item.kind === 'reasoning' && SKILL_TEACH[c.skill]) ? `<p>${SKILL_TEACH[c.skill]}</p>` : '';
+        const more = (!correct && item.kind === 'content') ? '<p>Worth another look in the Civilisation briefing or your Atlas card.</p>' : '';
+        card.querySelector('#kc-teach').innerHTML = `<div class="kc-teach ${correct ? 'ok' : 'miss'}">
+          <strong>${correct ? 'Correct.' : 'Not quite.'}</strong>
+          ${correct ? '' : `<p>The best answer: <em>${q.options[q.correct]}</em></p>`}
+          ${why}${tip}${more}</div>`;
+        const last = idx === items.length - 1;
+        actions.innerHTML = `<button class="btn btn-primary" id="btn-kc-next">${last ? 'See results' : 'Next question'}</button>`;
+        const nextBtn = document.getElementById('btn-kc-next');
+        nextBtn.addEventListener('click', () => { if (last) showResults(); else { idx++; showQuestion(); } }, { once: true });
+        nextBtn.focus();
       });
       optWrap.appendChild(optBtn);
     });
-    qDiv.appendChild(optWrap);
-    return qDiv;
+    card.querySelector('#kc-qtext').focus({ preventScroll: true });
+    card.scrollIntoView({ block: 'start' });
   }
 
-  c.knowledgeCheck.forEach((q, qi) => card.appendChild(buildQuestion(q, qi, null)));
-
-  const contentLabel = document.createElement('div');
-  contentLabel.className = 'kc-section-label';
-  contentLabel.textContent = 'Know your history';
-  card.appendChild(contentLabel);
-
-  const acc = currentAccount();
-  if (!acc.contentMastery[c.id]) acc.contentMastery[c.id] = { correct: 0, total: 0 };
-
-  (c.contentCheck || []).forEach((q, qi) => {
-    card.appendChild(buildQuestion(q, qi, (correct) => {
-      acc.contentMastery[c.id].total++;
-      if (correct) acc.contentMastery[c.id].correct++;
-      persist();
-    }));
-  });
-
-  body.appendChild(card);
-
-  const actions = document.createElement('div');
-  actions.className = 'case-actions';
-  // The button stays enabled the whole time (rather than HTML-disabled) so
-  // that clicking it early gives pupils an active reminder instead of
-  // silently doing nothing, which was confusing/looked broken.
-  actions.innerHTML = `<button class="btn btn-primary" id="btn-back-to-menu">Continue</button>${archivistButtonHtml(c)}
-    <p class="kc-reminder" id="kc-reminder" style="display:none; color:var(--tier-passive, #a5751f); font-weight:600; margin-top:8px;"></p>`;
-  body.appendChild(actions);
-  bindArchivistButtons(actions);
-
-  const backBtn = document.getElementById('btn-back-to-menu');
-  const reminder = document.getElementById('kc-reminder');
-  function updateBackButtonState(){
-    if (answeredCount >= totalQuestions){
-      backBtn.textContent = 'Back to case files';
-      reminder.style.display = 'none';
-    }
+  function showResults(){
+    card.innerHTML = `<h3 style="font-family:var(--font-display); font-weight:400; margin-top:0;">Knowledge check complete</h3>
+      <div class="kc-bar" aria-hidden="true"><span style="width:100%"></span></div>
+      <p class="kc-score">You answered <strong>${right} of ${items.length}</strong> correctly.</p>`;
+    actions.innerHTML = `<button class="btn btn-primary" id="btn-back-to-menu">Back to case files</button>${archivistButtonHtml(c)}`;
+    bindArchivistButtons(actions);
+    document.getElementById('btn-back-to-menu').addEventListener('click', () => {
+      clearCaseTimer();
+      renderMenu();
+      showScreen('screen-menu');
+    });
+    document.getElementById('btn-back-to-menu').focus();
   }
-  backBtn.addEventListener('click', () => {
-    if (answeredCount < totalQuestions){
-      const remaining = totalQuestions - answeredCount;
-      reminder.textContent = `Please answer ${remaining === 1 ? 'the last question' : `all ${remaining} remaining questions`} before moving on.`;
-      reminder.style.display = 'block';
-      const nextUnanswered = [...card.querySelectorAll('.kc-q')].find(q => !q.querySelector('div[data-answered]'));
-      if (nextUnanswered) nextUnanswered.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
-    }
-    clearCaseTimer();
-    renderMenu();
-    showScreen('screen-menu');
-  });
-  card.scrollIntoView({ behavior:'smooth', block:'start' });
+  showQuestion();
 }
 
 // ----- Read-only summary (completed case, retries disabled) -----
