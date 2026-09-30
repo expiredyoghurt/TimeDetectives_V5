@@ -27,8 +27,8 @@
 //   D1 database binding:   TD_DB
 //   Secret (REQUIRED):     SESSION_SECRET   (random string, 32+ characters;
 //                                            the API refuses to run without it)
-//   Secret (OPTIONAL):     Admin_User       (admin sign-in username; fallback: Administrator)
-//   Secret (OPTIONAL):     Admin_Password   (admin sign-in password; fallback: password4admin)
+//   Secret (REQUIRED for admin): Admin_User       (admin sign-in username; no default)
+//   Secret (REQUIRED for admin): Admin_Password   (admin sign-in password, 12+ chars; no default)
 //   Binding (optional):    AI               (Workers AI; only for the Archivist
 //                                            and practice quiz, which the admin
 //                                            can also switch off in the dashboard)
@@ -48,7 +48,7 @@ const TEACHER_TOKEN_TTL = 60 * 60 * 10;     // 10 hours — a school day, then r
 
 // aiEnabled defaults to FALSE: the Archivist and practice quiz stay off until
 // the admin switches them on in the dashboard.
-const DEFAULT_SETTINGS = { allowRetry: true, showHints: true, timeLimitMinutes: null, assignedCaseIds: [], aiEnabled: false, aiDailyLimit: 10 };
+const DEFAULT_SETTINGS = { allowRetry: true, showHints: true, timeLimitMinutes: null, timerMode: 'reminder', assignedCaseIds: [], aiEnabled: false, aiDailyLimit: 10 };
 
 // ---------------------------------------------------------------- utilities
 
@@ -63,6 +63,11 @@ function err(message, status = 400) { return json({ error: message }, status); }
 function normEmail(s) { return String(s || '').trim().toLowerCase(); }
 function normName(s) { return String(s || '').trim(); }
 function normNameKey(s) { return normName(s).toLowerCase(); }
+const MAX_NAME_LENGTH = 30;
+// Internal account id for accounts created without an email.
+function pupilIdForName(name) { return 'pupil:' + normNameKey(name); }
+// Names are shown in dashboards, so markup characters are refused outright.
+function nameHasMarkup(name) { return /[<>&"`]/.test(name); }
 
 function bufToB64url(buf) {
   let bin = '';
@@ -136,9 +141,6 @@ function getSecret(env) {
   if (!sessionSecretOk(env)) throw new Error('SESSION_SECRET is missing or too short');
   return env.SESSION_SECRET;
 }
-const FALLBACK_ADMIN_USER = 'Administrator';
-const FALLBACK_ADMIN_PASSWORD = 'password4admin';
-
 // Dedicated beta-tester account. It is provisioned automatically on first
 // sign-in so no manual D1 insert is required. The account is intentionally
 // marked so the client can expose every game feature for testing.
@@ -153,13 +155,15 @@ const BETA_CHECKPOINTS = {
   cp7: { correct: 6, total: 6 }
 };
 function adminUser(env) {
-  return typeof env.Admin_User === 'string' && env.Admin_User.trim() ? env.Admin_User.trim() : FALLBACK_ADMIN_USER;
+  return typeof env.Admin_User === 'string' ? env.Admin_User.trim() : '';
 }
 function adminPass(env) {
-  return typeof env.Admin_Password === 'string' && env.Admin_Password ? env.Admin_Password : FALLBACK_ADMIN_PASSWORD;
+  return typeof env.Admin_Password === 'string' ? env.Admin_Password : '';
 }
 // 'ok' | 'missing' | 'weak'
 function adminConfigStatus(env) {
+  // No built-in fallback: both secrets must be set in Cloudflare.
+  if (!adminUser(env) || !adminPass(env)) return 'missing';
   if (adminPass(env).length < MIN_ADMIN_PASSWORD_LENGTH) return 'weak';
   return 'ok';
 }
@@ -422,15 +426,19 @@ async function ensureBetaTester(env) {
 async function routePlayerSignup(request, env) {
   const body = await request.json().catch(() => ({}));
   const detectiveName = normName(body.detectiveName);
-  const email = normEmail(body.email);
+  // No email is collected. The `email` column/field is kept purely as the
+  // internal account id (so tokens, AI usage rows and existing accounts keep
+  // working); new accounts get an id derived from the detective name.
+  const email = pupilIdForName(detectiveName);
   const password = String(body.password || '');
 
-  if (!detectiveName || !email || !password) return err('Please fill in a detective name, email, and password.');
+  if (!detectiveName || !password) return err('Please fill in a detective name and a password.');
+  if (detectiveName.length > MAX_NAME_LENGTH) return err('Detective names can be at most ' + MAX_NAME_LENGTH + ' characters.');
+  if (nameHasMarkup(detectiveName)) return err('Detective names can\'t include < > & " or ` characters.');
   if (password.length < 6) return err('Password should be at least 6 characters.');
   if (adminUser(env) && normNameKey(detectiveName) === normNameKey(adminUser(env))) return err('That detective name is reserved. Please choose another.');
   if (normNameKey(detectiveName) === normNameKey(BETA_TESTER_NAME)) return err('That detective name is reserved. Please choose another.');
-  if (await getPlayerByEmail(env, email)) return err('An account with that email already exists — try signing in instead.');
-  if (await getEmailForName(env, detectiveName)) return err('That detective name is already in use. Try another.');
+  if (await getPlayerByEmail(env, email) || await getEmailForName(env, detectiveName)) return err('That detective name is already in use. Try another.');
 
   const { salt, hash } = await hashPassword(password);
   const rec = {
@@ -451,14 +459,43 @@ function sanitizeSeed(seed) {
   return out;
 }
 
+// ---- Failed-login throttle (per detective name). 4-digit PINs have only 10,000
+// possibilities, so unlimited guessing would defeat them. 10 misses inside
+// 15 minutes locks that name for the rest of the window. Best-effort: if the
+// login_attempts table doesn't exist yet (schema.sql not re-run) sign-in still works.
+const LOGIN_MAX_FAILS = 10;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+async function loginLocked(env, key) {
+  try {
+    const r = await env.TD_DB.prepare('SELECT fails, window_start FROM login_attempts WHERE name_key = ?1').bind(key).first();
+    return !!(r && r.fails >= LOGIN_MAX_FAILS && Date.now() - r.window_start < LOGIN_WINDOW_MS);
+  } catch (e) { return false; }
+}
+async function loginFailed(env, key) {
+  try {
+    const now = Date.now();
+    await env.TD_DB.prepare(
+      'INSERT INTO login_attempts (name_key, fails, window_start) VALUES (?1, 1, ?2) ' +
+      'ON CONFLICT(name_key) DO UPDATE SET fails = CASE WHEN ?2 - window_start > ?3 THEN 1 ELSE fails + 1 END, ' +
+      'window_start = CASE WHEN ?2 - window_start > ?3 THEN ?2 ELSE window_start END'
+    ).bind(key, now, LOGIN_WINDOW_MS).run();
+  } catch (e) { /* table missing: ignore */ }
+}
+async function loginSucceeded(env, key) {
+  try { await env.TD_DB.prepare('DELETE FROM login_attempts WHERE name_key = ?1').bind(key).run(); } catch (e) { /* ignore */ }
+}
+
 async function routePlayerLogin(request, env) {
   const body = await request.json().catch(() => ({}));
   const idVal = normName(body.idValue);
   const password = String(body.password || '');
-  if (!idVal || !password) return err('Enter your detective name or email, and your password.');
+  if (!idVal || !password) return err('Enter your detective name and your password or PIN.');
+
+  const throttleKey = normNameKey(idVal);
+  if (await loginLocked(env, throttleKey)) return err('Too many tries. Please wait 15 minutes, or ask your teacher to reset your PIN or password.', 429);
 
   let email;
-  if (!idVal.includes('@') && normNameKey(idVal) === normNameKey(BETA_TESTER_NAME)) {
+  if (normNameKey(idVal) === normNameKey(BETA_TESTER_NAME)) {
     const existingBeta = await getPlayerByEmail(env, BETA_TESTER_EMAIL);
     if (!existingBeta) {
       if (password !== BETA_TESTER_PASSWORD) return err('We could not find a matching account, or the password is incorrect.', 401);
@@ -466,14 +503,16 @@ async function routePlayerLogin(request, env) {
     }
     email = BETA_TESTER_EMAIL;
   } else {
-    email = idVal.includes('@') ? normEmail(idVal) : await getEmailForName(env, idVal);
+    email = await getEmailForName(env, idVal);
   }
-  if (!email) return err('We could not find a matching account, or the password is incorrect.', 401);
+  if (!email) { await loginFailed(env, throttleKey); return err('We could not find a matching account, or the password is incorrect.', 401); }
 
   const rec = await getPlayerByEmail(env, email);
   if (!rec || !(await verifyPassword(password, rec.salt, rec.hash))) {
+    await loginFailed(env, throttleKey);
     return err('We could not find a matching account, or the password is incorrect.', 401);
   }
+  await loginSucceeded(env, throttleKey);
   const token = await signToken({ sub: rec.email, exp: Math.floor(Date.now() / 1000) + PLAYER_TOKEN_TTL }, getSecret(env));
   return json({ account: sanitizePlayer(rec), token });
 }
@@ -545,6 +584,9 @@ async function routeTeacherLogin(request, env) {
       return json({ token, username: t.username, role: 'teacher' });
     }
   }
+  if (status === 'missing') {
+    return err('Admin sign-in is disabled: set the Admin_User and Admin_Password secrets in Cloudflare Pages. See README.', 503);
+  }
   if (status === 'weak') {
     return err('Admin sign-in is disabled: the Admin_Password secret must be at least ' + MIN_ADMIN_PASSWORD_LENGTH + ' characters.', 503);
   }
@@ -567,6 +609,8 @@ async function routeTeacherSettingsSave(request, env) {
     allowRetry: !!body.allowRetry,
     showHints: !!body.showHints,
     timeLimitMinutes: body.timeLimitMinutes ? Math.max(1, parseInt(body.timeLimitMinutes, 10)) : null,
+    // 'reminder' (default): the timer nudges but never auto-submits. 'strict': time-out auto-submits.
+    timerMode: body.timerMode === 'strict' ? 'strict' : 'reminder',
     assignedCaseIds: Array.isArray(body.assignedCaseIds) ? body.assignedCaseIds : [],
     // The AI switch and limit belong to the admin only; a plain teacher's save
     // carries the current values through untouched.
@@ -613,6 +657,14 @@ function generateTempPassword(length = 8) {
   return out;
 }
 
+// Random 4-digit PIN (0000-9999), unbiased via rejection sampling.
+function generatePin() {
+  const buf = new Uint32Array(1);
+  const limit = 4294967296 - (4294967296 % 10000);
+  do { crypto.getRandomValues(buf); } while (buf[0] >= limit);
+  return String(buf[0] % 10000).padStart(4, '0');
+}
+
 async function routeTeacherResetPassword(request, env) {
   const payload = await requireTeacher(request, env, false);
   if (!payload) return err('Please sign in as a teacher.', 401);
@@ -622,11 +674,58 @@ async function routeTeacherResetPassword(request, env) {
   const rec = await getPlayerByEmail(env, email);
   if (!rec) return err('No account found for that pupil.', 404);
 
-  const tempPassword = generateTempPassword();
+  const usePin = body.mode === 'pin';
+  const tempPassword = usePin ? generatePin() : generateTempPassword();
   const { salt, hash } = await hashPassword(tempPassword);
   rec.salt = salt; rec.hash = hash;
   await putPlayer(env, rec);
-  return json({ ok: true, tempPassword, detectiveName: rec.detectiveName });
+  await loginSucceeded(env, normNameKey(rec.detectiveName)); // clear any lockout
+  return json({ ok: true, tempPassword, isPin: usePin, detectiveName: rec.detectiveName });
+}
+
+// Bulk class set-up. The client sends small batches (BULK_MAX_PER_REQUEST)
+// because each account needs a PBKDF2 hash. Credentials are returned ONCE and
+// are never stored in plain text.
+const BULK_MAX_PER_REQUEST = 10;
+async function routeTeacherBulkCreate(request, env) {
+  const payload = await requireTeacher(request, env, false);
+  if (!payload) return err('Please sign in as a teacher.', 401);
+  const body = await request.json().catch(() => ({}));
+  const names = Array.isArray(body.names) ? body.names : [];
+  const mode = body.mode === 'password' ? 'password' : 'pin';
+  if (!names.length) return err('No names supplied.');
+  if (names.length > BULK_MAX_PER_REQUEST) return err('Send at most ' + BULK_MAX_PER_REQUEST + ' names per request.');
+
+  const results = [];
+  const seen = new Set();
+  for (const raw of names) {
+    const name = normName(raw).replace(/\s+/g, ' ');
+    const key = normNameKey(name);
+    if (!name || name.length > MAX_NAME_LENGTH || nameHasMarkup(name)) { results.push({ name: String(raw || '').slice(0, 40), status: 'invalid', note: 'Empty, too long, or contains < > & " or `' }); continue; }
+    if (seen.has(key)) { results.push({ name, status: 'exists', note: 'Duplicate in this list' }); continue; }
+    seen.add(key);
+    if (key === normNameKey(BETA_TESTER_NAME) || (adminUser(env) && key === normNameKey(adminUser(env)))) { results.push({ name, status: 'invalid', note: 'Reserved name' }); continue; }
+    const id = pupilIdForName(name);
+    if (await getPlayerByEmail(env, id) || await getEmailForName(env, name)) { results.push({ name, status: 'exists', note: 'Name already in use' }); continue; }
+    const credential = mode === 'pin' ? generatePin() : generateTempPassword();
+    const { salt, hash } = await hashPassword(credential);
+    await putPlayer(env, { detectiveName: name, email: id, salt, hash, isGuest: false, createdByTeacher: true, credentialType: mode, ...blankProgressFields() });
+    results.push({ name, status: 'created', credential, isPin: mode === 'pin' });
+  }
+  return json({ ok: true, results });
+}
+
+// Per-pupil extra time (accessibility). Stored on the pupil's record but NOT in
+// SAVEABLE_FIELDS, so a pupil's own saves can never change it.
+async function routeTeacherExtraTime(request, env) {
+  const payload = await requireTeacher(request, env, false);
+  if (!payload) return err('Please sign in as a teacher.', 401);
+  const body = await request.json().catch(() => ({}));
+  const rec = await getPlayerByEmail(env, normEmail(body.email));
+  if (!rec) return err('No account found for that pupil.', 404);
+  rec.extraTimeMinutes = clampInt(body.minutes, 0, 60, 0);
+  await putPlayer(env, rec);
+  return json({ ok: true, account: sanitizePlayer(rec) });
 }
 
 async function routeTeacherResetCase(request, env) {
@@ -911,6 +1010,8 @@ export async function onRequest(context) {
     if (path === 'teacher/teachers' && method === 'GET') return await routeTeachersList(request, env);
     if (path === 'teacher/teachers' && method === 'POST') return await routeTeachersAdd(request, env);
     if (path === 'teacher/reset-password' && method === 'POST') return await routeTeacherResetPassword(request, env);
+    if (path === 'teacher/bulk-create' && method === 'POST') return await routeTeacherBulkCreate(request, env);
+    if (path === 'teacher/extra-time' && method === 'POST') return await routeTeacherExtraTime(request, env);
     if (path === 'teacher/reset-case' && method === 'POST') return await routeTeacherResetCase(request, env);
     if (path === 'ai/ask' && method === 'POST') return await routeAiAsk(request, env);
     if (path === 'ai/quiz' && method === 'POST') return await routeAiQuiz(request, env);
