@@ -110,3 +110,11 @@ CREATE TABLE IF NOT EXISTS ai_log (
   blocked         INTEGER NOT NULL DEFAULT 0, -- 1 = refused before reaching the model
   flagged         INTEGER NOT NULL DEFAULT 0  -- 1 = the pupil reported this answer
 );
+
+-- Failed sign-in counter per detective name (protects short PINs from guessing).
+-- Re-run this file on an existing database; it is safe to repeat.
+CREATE TABLE IF NOT EXISTS login_attempts (
+  name_key      TEXT PRIMARY KEY,
+  fails         INTEGER NOT NULL DEFAULT 0,
+  window_start  INTEGER NOT NULL
+);

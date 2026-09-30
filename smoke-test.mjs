@@ -37,6 +37,7 @@ class MockStatement {
     if (sql.startsWith('SELECT * FROM teachers WHERE username_key')) return db.teachers.get(params[0]) || null;
     if (sql.startsWith('SELECT data FROM settings')) return db.settingsRow;
     if (sql.startsWith('SELECT calls FROM ai_global')) return db.aiGlobal.has(params[0]) ? { calls: db.aiGlobal.get(params[0]) } : null;
+    if (sql.startsWith('SELECT fails, window_start FROM login_attempts')) return (db.loginAttempts && db.loginAttempts.get(params[0])) || null;
     if (sql.startsWith('SELECT used FROM ai_usage')) { const k = params[0] + '|' + params[1]; return db.aiUsage.has(k) ? { used: db.aiUsage.get(k) } : null; }
     throw new Error('MockD1: unhandled .first() query: ' + sql);
   }
@@ -63,6 +64,14 @@ class MockStatement {
       db.players.set(email, { email, detective_name, detective_name_key, salt, hash, is_guest, points, data, updated_at });
       return { success: true };
     }
+    if (sql.startsWith('INSERT INTO login_attempts')) {
+      db.loginAttempts = db.loginAttempts || new Map();
+      const [k, now, win] = params; const r = db.loginAttempts.get(k);
+      if (!r || now - r.window_start > win) db.loginAttempts.set(k, { fails: 1, window_start: now });
+      else r.fails++;
+      return { success: true };
+    }
+    if (sql.startsWith('DELETE FROM login_attempts')) { if (db.loginAttempts) db.loginAttempts.delete(params[0]); return { success: true }; }
     if (sql.startsWith('INSERT INTO teachers')) {
       const [username, username_key, salt, hash] = params;
       db.teachers.set(username_key, { username, username_key, salt, hash });
@@ -173,7 +182,6 @@ const run = async () => {
   // ---- Sign up a new pupil ----
   doc.getElementById('btn-goto-signup').click();
   doc.getElementById('signup-name').value = 'Ada Lovelace';
-  doc.getElementById('signup-email').value = 'ada@school.edu';
   doc.getElementById('signup-password').value = 'letmein1';
   doc.getElementById('form-signup').dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }));
   await sleep(150);
@@ -185,13 +193,13 @@ const run = async () => {
   // then use the manual Save button and confirm it lands in D1. ----
   window.eval(`awardCaseCompletion(getCase(1), 'ideal');`);
   await sleep(30);
-  const rowBeforeSave = env.TD_DB.players.get('ada@school.edu'); // signup itself already wrote a blank (points=0) row
+  const rowBeforeSave = env.TD_DB.players.get('pupil:ada lovelace'); // signup itself already wrote a blank (points=0) row
   assert(!!rowBeforeSave && rowBeforeSave.points === 0, 'points are NOT yet saved server-side — only the 5-minute interval, the Save button, or a tab-close flush send a save');
   assert(doc.getElementById('sync-pill').textContent.includes('Unsaved'), `sync pill reflects the unsaved state before any save trigger fires (text: "${doc.getElementById('sync-pill').textContent}")`);
   doc.getElementById('btn-save-now').click();
   await sleep(150);
 
-  const savedRow = env.TD_DB.players.get('ada@school.edu');
+  const savedRow = env.TD_DB.players.get('pupil:ada lovelace');
   assert(!!savedRow, 'player record exists in D1 after clicking Save');
   const saved = { ...JSON.parse(savedRow.data), points: savedRow.points };
   assert(saved.points > 0, `points synced to D1 backend (points=${saved.points})`);
@@ -228,22 +236,20 @@ const run = async () => {
   // ---- Teacher gate: wrong password on the admin username must fail ----
   const window4 = await makeDom();
   const doc4 = window4.document;
-  doc4.getElementById('btn-goto-login').click();
-  doc4.getElementById('tab-login').click();
-  doc4.getElementById('login-id').value = ADMIN_TEST_USER;
-  doc4.getElementById('login-password').value = 'not-the-password';
-  doc4.getElementById('form-login').dispatchEvent(new window4.Event('submit', { bubbles: true, cancelable: true }));
+  doc4.getElementById('btn-goto-teacher-login').click();
+  doc4.getElementById('teacher-login-username').value = ADMIN_TEST_USER;
+  doc4.getElementById('teacher-login-password').value = 'not-the-password';
+  doc4.getElementById('form-teacher-login').dispatchEvent(new window4.Event('submit', { bubbles: true, cancelable: true }));
   await sleep(200);
   assert(!doc4.getElementById('screen-teacher').classList.contains('active'), 'wrong admin password does NOT open the teacher dashboard');
 
   // ---- Teacher gate: correct admin login opens dashboard with the pupil visible ----
   const window5 = await makeDom();
   const doc5 = window5.document;
-  doc5.getElementById('btn-goto-login').click();
-  doc5.getElementById('tab-login').click();
-  doc5.getElementById('login-id').value = ADMIN_TEST_USER;
-  doc5.getElementById('login-password').value = ADMIN_TEST_PASS;
-  doc5.getElementById('form-login').dispatchEvent(new window5.Event('submit', { bubbles: true, cancelable: true }));
+  doc5.getElementById('btn-goto-teacher-login').click();
+  doc5.getElementById('teacher-login-username').value = ADMIN_TEST_USER;
+  doc5.getElementById('teacher-login-password').value = ADMIN_TEST_PASS;
+  doc5.getElementById('form-teacher-login').dispatchEvent(new window5.Event('submit', { bubbles: true, cancelable: true }));
   await sleep(300);
   assert(doc5.getElementById('screen-teacher').classList.contains('active'), 'correct admin username and password open the teacher dashboard');
   const rosterHtml = doc5.getElementById('roster-table').innerHTML;
@@ -255,7 +261,6 @@ const run = async () => {
   const doc6 = window6.document;
   doc6.getElementById('btn-goto-signup').click();
   doc6.getElementById('signup-name').value = 'Random Student';
-  doc6.getElementById('signup-email').value = 'random@school.edu';
   doc6.getElementById('signup-password').value = 'anypass1';
   doc6.getElementById('form-signup').dispatchEvent(new window6.Event('submit', { bubbles: true, cancelable: true }));
   await sleep(150);
@@ -301,22 +306,21 @@ const run = async () => {
   kcCardCount = doc8.querySelectorAll('.kc-card').length;
   assert(kcCardCount === 1, `a stray extra click on the old "Continue" button does not stack a duplicate knowledge check (found ${kcCardCount})`);
 
-  // Clicking Continue on the knowledge check before answering everything must show
-  // a reminder and NOT navigate away.
+  // v5.1: the knowledge check is one question at a time, with teaching feedback after each answer.
+  assert(/Question 1 of \d+/.test(doc8.querySelector('.kc-progress').textContent), 'knowledge check shows "Question 1 of N"');
+  assert(!doc8.querySelector('.kc-teach'), 'no feedback is shown before a question is answered');
+  assert(doc8.querySelectorAll('.steps li.current').length === 1 && doc8.querySelector('.steps li.current .step-label').textContent === 'Check', 'step tracker marks "Check" as the current step');
+  doc8.querySelector('#kc-opts .kc-opt').click();
+  assert(!!doc8.querySelector('.kc-teach') && !!doc8.getElementById('btn-kc-next'), 'answering shows teaching feedback and a Next button');
+  assert(doc8.querySelectorAll('#kc-opts .kc-opt.correct').length === 1, 'the correct answer is always highlighted after answering');
+  for (let g = 0; g < 60 && !doc8.getElementById('btn-back-to-menu'); g++){
+    const nb = doc8.getElementById('btn-kc-next'); if (nb) nb.click();
+    const o = doc8.querySelector('#kc-opts .kc-opt'); if (o) o.click();
+  }
+  assert(/answered \d+ of \d+ correctly/.test(doc8.querySelector('.kc-score').textContent), 'knowledge check ends with a results summary');
   doc8.getElementById('btn-back-to-menu').click();
   await sleep(30);
-  assert(doc8.getElementById('screen-case').classList.contains('active'), 'clicking Continue before finishing the quiz stays on the case screen');
-  const reminderText = doc8.getElementById('kc-reminder').textContent;
-  assert(doc8.getElementById('kc-reminder').style.display !== 'none' && reminderText.length > 0, `reminder message is shown to pupils (text: "${reminderText}")`);
-
-  // Answer every question, then Continue should proceed to the menu exactly once.
-  window8.eval(`
-    document.querySelectorAll('.kc-q').forEach(q => q.querySelector('.kc-opt').click());
-  `);
-  await sleep(30);
-  doc8.getElementById('btn-back-to-menu').click();
-  await sleep(30);
-  assert(doc8.getElementById('screen-menu').classList.contains('active'), 'after answering every question, Continue proceeds to the menu');
+  assert(doc8.getElementById('screen-menu').classList.contains('active'), 'after the results screen, Continue proceeds to the menu');
 
   // A second click after arriving at the menu (button no longer exists) must not error or reopen the quiz.
   let crashed = false;
@@ -329,7 +333,6 @@ const run = async () => {
   const doc9 = window9.document;
   doc9.getElementById('btn-goto-signup').click();
   doc9.getElementById('signup-name').value = 'Beatrix Rossi';
-  doc9.getElementById('signup-email').value = 'beatrix@school.edu';
   doc9.getElementById('signup-password').value = 'firstpass1';
   doc9.getElementById('form-signup').dispatchEvent(new window9.Event('submit', { bubbles: true, cancelable: true }));
   await sleep(150);
@@ -338,17 +341,16 @@ const run = async () => {
 
   const window10 = await makeDom(); // the "teacher's own laptop"
   const doc10 = window10.document;
-  doc10.getElementById('btn-goto-login').click();
-  doc10.getElementById('tab-login').click();
-  doc10.getElementById('login-id').value = ADMIN_TEST_USER;
-  doc10.getElementById('login-password').value = ADMIN_TEST_PASS;
-  doc10.getElementById('form-login').dispatchEvent(new window10.Event('submit', { bubbles: true, cancelable: true }));
+  doc10.getElementById('btn-goto-teacher-login').click();
+  doc10.getElementById('teacher-login-username').value = ADMIN_TEST_USER;
+  doc10.getElementById('teacher-login-password').value = ADMIN_TEST_PASS;
+  doc10.getElementById('form-teacher-login').dispatchEvent(new window10.Event('submit', { bubbles: true, cancelable: true }));
   await sleep(300);
   assert(doc10.getElementById('roster-table').innerHTML.includes('Beatrix Rossi'), 'teacher roster includes the new pupil');
   assert(doc10.getElementById('roster-table').innerHTML.includes('Last active'), 'roster table has a "Last active" column header');
   assert(/Today|20\d\d/.test(doc10.getElementById('roster-table').innerHTML), 'roster shows a real last-active timestamp, not a placeholder dash for an active pupil');
 
-  const manageBtn = [...doc10.querySelectorAll('.btn-manage-student')].find(b => b.dataset.email === 'beatrix@school.edu');
+  const manageBtn = [...doc10.querySelectorAll('.btn-manage-student')].find(b => b.dataset.email === 'pupil:beatrix rossi');
   assert(!!manageBtn, 'roster row has a "Manage" button');
   manageBtn.click();
   await sleep(30);
@@ -405,7 +407,6 @@ const run = async () => {
   Object.defineProperty(window13.navigator, 'onLine', { value: true, configurable: true });
   doc13.getElementById('btn-goto-signup').click();
   doc13.getElementById('signup-name').value = 'Cass Whitfield';
-  doc13.getElementById('signup-email').value = 'cass@school.edu';
   doc13.getElementById('signup-password').value = 'signup123';
   doc13.getElementById('form-signup').dispatchEvent(new window13.Event('submit', { bubbles: true, cancelable: true }));
   await sleep(150);
@@ -437,7 +438,6 @@ const run = async () => {
   window14.fetch = async (...args) => { if (String(args[0]).includes('/api/player/save')) saveCallCount++; return origFetch14(...args); };
   doc14.getElementById('btn-goto-signup').click();
   doc14.getElementById('signup-name').value = 'Dara Okafor';
-  doc14.getElementById('signup-email').value = 'dara@school.edu';
   doc14.getElementById('signup-password').value = 'signup123';
   doc14.getElementById('form-signup').dispatchEvent(new window14.Event('submit', { bubbles: true, cancelable: true }));
   await sleep(150);
@@ -510,11 +510,10 @@ const run = async () => {
   // Teacher signs in and attaches a URL to the first legacy of Case 1
   const windowT = await makeDom();
   const docT = windowT.document;
-  docT.getElementById('btn-goto-login').click();
-  docT.getElementById('tab-login').click();
-  docT.getElementById('login-id').value = ADMIN_TEST_USER;
-  docT.getElementById('login-password').value = ADMIN_TEST_PASS;
-  docT.getElementById('form-login').dispatchEvent(new windowT.Event('submit', { bubbles: true, cancelable: true }));
+  docT.getElementById('btn-goto-teacher-login').click();
+  docT.getElementById('teacher-login-username').value = ADMIN_TEST_USER;
+  docT.getElementById('teacher-login-password').value = ADMIN_TEST_PASS;
+  docT.getElementById('form-teacher-login').dispatchEvent(new windowT.Event('submit', { bubbles: true, cancelable: true }));
   await sleep(300);
   assert(docT.getElementById('illustrations-manager').innerHTML.includes('Case 1'), 'the teacher dashboard\'s illustrations panel lists Case 1');
   const case1Row = [...docT.querySelectorAll('.illustration-row')].find(r => r.dataset.legacyId === legacyBriefingIdForTest(1, 0));
@@ -573,11 +572,10 @@ const run = async () => {
 
   const windowT2 = await makeDom();
   const docT2 = windowT2.document;
-  docT2.getElementById('btn-goto-login').click();
-  docT2.getElementById('tab-login').click();
-  docT2.getElementById('login-id').value = ADMIN_TEST_USER;
-  docT2.getElementById('login-password').value = ADMIN_TEST_PASS;
-  docT2.getElementById('form-login').dispatchEvent(new windowT2.Event('submit', { bubbles: true, cancelable: true }));
+  docT2.getElementById('btn-goto-teacher-login').click();
+  docT2.getElementById('teacher-login-username').value = ADMIN_TEST_USER;
+  docT2.getElementById('teacher-login-password').value = ADMIN_TEST_PASS;
+  docT2.getElementById('form-teacher-login').dispatchEvent(new windowT2.Event('submit', { bubbles: true, cancelable: true }));
   await sleep(300);
   assert(docT2.getElementById('illustrations-manager').innerHTML.includes('Reasoning skill icons'), 'illustrations panel has a dedicated section for the six reasoning skills, separate from the per-case groups');
   const sourcingSkillId = windowT2.eval(`skillIllustrationId('Sourcing')`);
@@ -723,6 +721,7 @@ const run = async () => {
   docC.getElementById('btn-begin-investigation').click();
   assert(!!docC.querySelector('.dispatch') || true, 'case screen opens');
   [...docC.querySelectorAll('.option-btn')].find(b => b.textContent === misText).click();
+  docC.querySelector('[data-lock]').click();   // v5.1: select, then lock in
   await sleep(30);
   const consEl = docC.querySelector('.resolution-card.tier-misstep .consequence');
   assert(!!consEl && consEl.textContent.includes(misConsequence), 'choosing a misstep shows the in-world consequence');
@@ -814,7 +813,7 @@ const run = async () => {
   await askWin.eval('refreshSettingsCache()'); // the page's own first load ran before this test's fetch mock existed
   askDoc.getElementById('btn-goto-login').click();
   askDoc.getElementById('tab-login').click();
-  askDoc.getElementById('login-id').value = 'ai1@school.edu';
+  askDoc.getElementById('login-id').value = 'Ai Pupil';
   askDoc.getElementById('login-password').value = 'letmein1';
   askDoc.getElementById('form-login').dispatchEvent(new askWin.Event('submit', { bubbles: true, cancelable: true }));
   await sleep(300);
@@ -855,11 +854,10 @@ const run = async () => {
   const tWin = await makeDom();
   const tDoc = tWin.document;
   await tWin.eval('refreshSettingsCache()');
-  tDoc.getElementById('btn-goto-login').click();
-  tDoc.getElementById('tab-login').click();
-  tDoc.getElementById('login-id').value = ADMIN_TEST_USER;
-  tDoc.getElementById('login-password').value = ADMIN_TEST_PASS;
-  tDoc.getElementById('form-login').dispatchEvent(new tWin.Event('submit', { bubbles: true, cancelable: true }));
+  tDoc.getElementById('btn-goto-teacher-login').click();
+  tDoc.getElementById('teacher-login-username').value = ADMIN_TEST_USER;
+  tDoc.getElementById('teacher-login-password').value = ADMIN_TEST_PASS;
+  tDoc.getElementById('form-teacher-login').dispatchEvent(new tWin.Event('submit', { bubbles: true, cancelable: true }));
   await sleep(400);
   assert(tDoc.getElementById('setting-ai-enabled').checked === true && tDoc.getElementById('setting-ai-enabled').disabled === false, 'the admin sees the AI switch, enabled');
   assert(tDoc.getElementById('ai-log-list').textContent.includes('Who built it?') && tDoc.getElementById('ai-log-list').textContent.includes('Reported by pupil'), 'the dashboard lists pupils\' questions and reported answers');
@@ -870,13 +868,154 @@ const run = async () => {
   const tWin2 = await makeDom();
   const tDoc2 = tWin2.document;
   await tWin2.eval('refreshSettingsCache()');
-  tDoc2.getElementById('btn-goto-login').click();
-  tDoc2.getElementById('tab-login').click();
-  tDoc2.getElementById('login-id').value = 'Ms Lee';
-  tDoc2.getElementById('login-password').value = 'teacherpass1';
-  tDoc2.getElementById('form-login').dispatchEvent(new tWin2.Event('submit', { bubbles: true, cancelable: true }));
+  tDoc2.getElementById('btn-goto-teacher-login').click();
+  tDoc2.getElementById('teacher-login-username').value = 'Ms Lee';
+  tDoc2.getElementById('teacher-login-password').value = 'teacherpass1';
+  tDoc2.getElementById('form-teacher-login').dispatchEvent(new tWin2.Event('submit', { bubbles: true, cancelable: true }));
   await sleep(400);
   assert(tDoc2.getElementById('setting-ai-enabled').disabled === true && tDoc2.getElementById('ai-admin-only-note').style.display === 'block', 'a plain teacher sees the AI switch locked, with an explanation');
+
+  // ================= v5.1: no-email accounts, bulk class set-up, PIN throttle, UI =================
+  const adm = (await api('teacher/login', { method: 'POST', body: { username: ADMIN_TEST_USER, password: ADMIN_TEST_PASS } })).data.token;
+  const noEmail = await api('player/signup', { method: 'POST', body: { detectiveName: 'Noor', password: 'letmein1' } });
+  assert(noEmail.status === 200 && !!noEmail.data.token, 'a pupil can sign up with just a detective name and password (no email)');
+  assert((await api('player/signup', { method: 'POST', body: { detectiveName: 'NOOR', password: 'letmein1' } })).status === 400, 'a detective name can only be claimed once (case-insensitive)');
+  assert((await api('player/signup', { method: 'POST', body: { detectiveName: 'Bad<img>', password: 'letmein1' } })).status === 400, 'detective names with markup characters are refused');
+  assert((await api('player/login', { method: 'POST', body: { idValue: 'noor', password: 'letmein1' } })).status === 200, 'sign-in works with the detective name alone');
+
+  assert((await api('teacher/bulk-create', { method: 'POST', body: { names: ['A'], mode: 'pin' } })).status === 401, 'bulk set-up needs a teacher sign-in');
+  assert((await api('teacher/bulk-create', { method: 'POST', token: adm, body: { names: Array.from({ length: 11 }, (_, i) => 'N' + i), mode: 'pin' } })).status === 400, 'bulk set-up caps the size of one request');
+  const bulk = await api('teacher/bulk-create', { method: 'POST', token: adm, body: { names: ['Zed 7B', 'Yara 7B', 'zed 7b', 'Kirito', 'Bad<Name', 'Noor'], mode: 'pin' } });
+  const br = bulk.data.results || [];
+  const made = br.filter(r => r.status === 'created');
+  assert(bulk.status === 200 && made.length === 2 && made.every(r => /^\d{4}$/.test(r.credential)), 'bulk set-up creates accounts with 4-digit PINs');
+  assert(br.filter(r => r.status === 'exists').length === 2 && br.filter(r => r.status === 'invalid').length === 2, 'bulk set-up skips duplicates, existing names, reserved and invalid names');
+  const zedPin = made.find(r => r.name === 'Zed 7B').credential;
+  assert((await api('player/login', { method: 'POST', body: { idValue: 'Zed 7B', password: zedPin } })).status === 200, 'a bulk-created pupil signs in with the PIN');
+  const pw = await api('teacher/bulk-create', { method: 'POST', token: adm, body: { names: ['Pia 7B'], mode: 'password' } });
+  assert(/^[A-Za-z0-9]{8}$/.test(pw.data.results[0].credential), 'password mode generates an 8-character password');
+
+  for (let i = 0; i < 10; i++) await api('player/login', { method: 'POST', body: { idValue: 'Zed 7B', password: '0000x' + i } });
+  const locked = await api('player/login', { method: 'POST', body: { idValue: 'Zed 7B', password: zedPin } });
+  assert(locked.status === 429, 'after 10 wrong tries a name is temporarily locked, even for the right PIN');
+  const reset = await api('teacher/reset-password', { method: 'POST', token: adm, body: { email: 'pupil:zed 7b', mode: 'pin' } });
+  assert(reset.status === 200 && /^\d{4}$/.test(reset.data.tempPassword) && reset.data.isPin, 'teacher can reset a pupil to a new 4-digit PIN');
+  assert((await api('player/login', { method: 'POST', body: { idValue: 'Zed 7B', password: reset.data.tempPassword } })).status === 200, 'a teacher reset also clears the lock-out');
+
+  // ---- UI: chapters, progress tracker, confirm-before-lock-in ----
+  const wg = await makeDom(); const dg = wg.document;
+  dg.getElementById('btn-play-guest').click();
+  await sleep(120);
+  assert(dg.querySelectorAll('details.chapter').length === 7, 'the case menu is grouped into 7 chapters');
+  assert(dg.querySelectorAll('details.chapter[open]').length === 1 && !!dg.querySelector('.continue-card'), 'only the current chapter starts open, with a Continue card');
+  assert(dg.querySelectorAll('.case-card').length === 36, 'all 36 cases still appear inside the chapters');
+  wg.eval(`openCase(getCase(CASES.find(c => c.type !== 'full').id).id)`);
+  dg.getElementById('btn-begin-investigation').click();
+  assert(!!dg.querySelector('.steps li.current'), 'the step tracker shows inside a case');
+  dg.querySelector('.option-btn').click();
+  assert(!dg.querySelector('.resolution-card') && !!dg.querySelector('[data-lock]'), 'tapping an answer only selects it (nothing is locked yet)');
+  dg.querySelectorAll('.option-btn')[1].click();
+  assert(dg.querySelectorAll('.option-btn.selected').length === 1, 'the pupil can change their mind before locking in');
+  dg.querySelector('[data-lock]').click();
+  await sleep(30);
+  assert(!!dg.querySelector('.resolution-card'), 'Lock in answer resolves the decision');
+
+  // ---- UI: teacher tabs ----
+  const wt = await makeDom(); const dt = wt.document;
+  dt.getElementById('btn-goto-teacher-login').click();
+  dt.getElementById('teacher-login-username').value = ADMIN_TEST_USER;
+  dt.getElementById('teacher-login-password').value = ADMIN_TEST_PASS;
+  dt.getElementById('form-teacher-login').dispatchEvent(new wt.Event('submit', { bubbles: true, cancelable: true }));
+  await sleep(400);
+  assert(dt.querySelector('#panel-t-class').classList.contains('active') && !dt.getElementById('settings-savebar').classList.contains('visible'), 'dashboard opens on the Class tab with roster first');
+  assert(!/Email/.test(dt.getElementById('roster-table').innerHTML), 'the roster no longer shows an email column');
+  dt.getElementById('tab-t-settings').click();
+  assert(dt.querySelector('#panel-t-settings').classList.contains('active') && dt.getElementById('settings-savebar').classList.contains('visible'), 'Settings tab shows the sticky save bar');
+  dt.getElementById('setting-show-hints').click();
+  assert(/Unsaved/.test(dt.getElementById('settings-dirty-note').textContent), 'changing a setting flags unsaved changes');
+  assert(dt.getElementById('tab-t-admin').style.display !== 'none', 'the Admin tab is visible to the admin');
+
+  // ================= v5.1b: hints, timer, extra time, no fallback admin =================
+  const envBare = { ...env, Admin_User: undefined, Admin_Password: undefined };
+  const fbTry = await api('teacher/login', { method: 'POST', body: { username: 'Administrator', password: 'password4admin' }, e: envBare });
+  assert(fbTry.status === 503 && !fbTry.data.token, 'the old fallback admin credentials no longer sign anyone in');
+  assert((await api('teacher/login', { method: 'POST', body: { username: 'Administrator', password: 'password4admin' } })).status === 401, 'the old fallback credentials are rejected even when other admin secrets are set');
+  const kir = await api('player/login', { method: 'POST', body: { idValue: 'Kirito', password: 'beater' } });
+  assert(kir.status === 200 && kir.data.account.isBetaTester, 'the Kirito beta tester account still works');
+
+  const st = await api('teacher/settings', { method: 'POST', token: adm, body: { allowRetry: true, showHints: true, timeLimitMinutes: 5, timerMode: 'strict', assignedCaseIds: [] } });
+  assert(st.data.settings.timerMode === 'strict', 'teacher can set the timer to strict');
+  const st2 = await api('teacher/settings', { method: 'POST', token: adm, body: { allowRetry: true, showHints: true, timeLimitMinutes: 5, timerMode: 'nonsense', assignedCaseIds: [] } });
+  assert(st2.data.settings.timerMode === 'reminder', 'an unknown timer mode falls back to remind-only');
+  assert((await api('teacher/extra-time', { method: 'POST', body: { email: 'pupil:noor', minutes: 5 } })).status === 401, 'extra time needs a teacher sign-in');
+  const et = await api('teacher/extra-time', { method: 'POST', token: adm, body: { email: 'pupil:noor', minutes: 500 } });
+  assert(et.status === 200 && et.data.account.extraTimeMinutes === 60, 'extra time is capped at 60 minutes');
+  await api('player/save', { method: 'POST', token: noEmail.data.token, body: { account: { extraTimeMinutes: 0, points: 5 } } });
+  const noorAgain = (await api('player/login', { method: 'POST', body: { idValue: 'Noor', password: 'letmein1' } })).data.account;
+  assert(noorAgain.extraTimeMinutes === 60, 'a pupil cannot change their own extra time');
+
+  // ---- UI: graduated in-page hints ----
+  await api('teacher/settings', { method: 'POST', token: adm, body: { allowRetry: true, showHints: true, timeLimitMinutes: null, timerMode: 'reminder', assignedCaseIds: [] } });
+  const wh = await makeDom(); const dh = wh.document;
+  await wh.eval('refreshSettingsCache()');
+  dh.getElementById('btn-play-guest').click();
+  await sleep(120);
+  wh.eval(`openCase(CASES.find(c => c.type !== 'full').id)`);
+  dh.getElementById('btn-begin-investigation').click();
+  let alerted = false; wh.alert = () => { alerted = true; };
+  dh.getElementById('btn-hint').click();
+  assert(!alerted && !!dh.getElementById('hint-panel') && dh.querySelectorAll('#hint-panel .hint-line').length === 0, 'opening the hint panel shows no hint yet and costs nothing');
+  assert(/Show hint 1/.test(dh.getElementById('btn-hint-more').textContent) && /10 points/.test(dh.querySelector('.hint-cost').textContent), 'the button and note state the 10-point cost');
+  dh.getElementById('btn-hint-more').click();
+  const firstCase = wh.eval(`CASES.find(c => c.type !== 'full')`);
+  assert(dh.querySelectorAll('#hint-panel .hint-line').length === 1 && dh.querySelector('#hint-panel .hint-line').textContent.includes(firstCase.hints[0]), 'hint 1 is the case-specific nudge');
+  dh.getElementById('btn-hint-more').click();
+  dh.getElementById('btn-hint-more').click();
+  assert(dh.querySelectorAll('#hint-panel .hint-line').length === 3 && !dh.getElementById('btn-hint-more'), 'hints escalate to three levels, then stop');
+  dh.getElementById('btn-hint-close').click();
+  assert(!dh.getElementById('hint-panel'), 'hints can be hidden again');
+  assert(wh.eval(`CASES.every(c => Array.isArray(c.hints) && c.hints.length === 3 && c.hints.every(h => h && h.length > 20)`.replace('`CASES','CASES')+`)`) === true, 'every case has three case-specific hints');
+
+  // ---- hints cost 10 points each, taken off the first completion ----
+  const wp = await makeDom(); const dp = wp.document;
+  await wp.eval('refreshSettingsCache()');
+  dp.getElementById('btn-play-guest').click();
+  await sleep(120);
+  wp.eval(`openCase(4)`);
+  dp.getElementById('btn-begin-investigation').click();
+  dp.getElementById('btn-hint').click();
+  dp.getElementById('btn-hint-more').click();
+  dp.getElementById('btn-hint-more').click();
+  const before = wp.eval('currentAccount().points');
+  const idealTxt = wp.eval(`getCase(4).decision.options.find(o => o.tier === 'ideal').text`);
+  [...dp.querySelectorAll('.option-btn')].find(b => b.textContent === idealTxt).click();
+  dp.querySelector('[data-lock]').click();
+  await sleep(30);
+  assert(wp.eval('currentAccount().points') - before === 80, 'ideal answer with 2 hints earns 100 - 20 = 80 points');
+  assert(/− 20 for hints/.test(dp.querySelector('.resolution-points').textContent), 'the resolution card shows the hint cost');
+  assert(wp.eval('currentAccount().progress[4].hints') === 2, 'hints used are recorded with the result');
+  wp.eval(`openCase(4)`);
+  dp.getElementById('btn-hint').click();
+  assert(/free/i.test(dp.querySelector('.hint-cost').textContent) && !/pts\)/.test(dp.getElementById('btn-hint-more').textContent), 'hints are free on a case already completed');
+
+  // ---- UI: timer modes ----
+  const wtm = await makeDom(); const dtm = wtm.document;
+  await wtm.eval('refreshSettingsCache()');
+  dtm.getElementById('btn-play-guest').click();
+  await sleep(120);
+  wtm.eval(`cachedSettings = { ...cachedSettings, timeLimitMinutes: 3, timerMode: 'reminder' }; openCase(CASES.find(c => c.type !== 'full').id);`);
+  dtm.getElementById('btn-begin-investigation').click();
+  assert(!!dtm.getElementById('case-timer-badge'), 'the timer badge appears when a limit is set');
+  wtm.eval(`caseTimerState.deadline = Date.now() + 30000;`);
+  await sleep(1200);
+  assert(dtm.getElementById('case-timer-badge').classList.contains('timer-low') && /One minute/.test(dtm.getElementById('timer-live').textContent), 'under a minute left, the badge changes and a polite announcement is made');
+  wtm.eval(`caseTimerState.deadline = Date.now() - 1000;`);
+  await sleep(1200);
+  assert(!dtm.querySelector('.resolution-card') && /No rush/.test(dtm.getElementById('case-timer-badge').textContent), 'in remind-only mode, time running out does NOT auto-submit');
+  wtm.eval(`cachedSettings = { ...cachedSettings, timerMode: 'strict' }; caseTimerState.expired = false; caseTimerState.deadline = Date.now() - 1000;`);
+  dtm.querySelector('.option-btn').click();   // selected, not locked
+  await sleep(1200);
+  assert(!!dtm.querySelector('.resolution-card'), 'in strict mode, time running out submits');
 
   console.log(failures === 0 ? '\nALL SMOKE TESTS PASSED' : `\n${failures} SMOKE TEST(S) FAILED`);
   process.exit(failures === 0 ? 0 : 1);

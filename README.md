@@ -86,6 +86,12 @@ sync section in `index.html` (search for it) — change the number, save,
 redeploy.
 
 
+## Version 5.1: UI/UX pass
+
+Confirm-before-lock-in, in-case progress tracker, teaching feedback in the knowledge check, chapters, no email collection (detective name + password/PIN), teacher bulk class set-up, and a tabbed teacher dashboard. See `CHANGELOG.md`.
+
+**Upgrading from v5.0:** re-run `schema.sql` (adds the `login_attempts` table). No new secrets. Existing pupil accounts keep working and sign in by detective name.
+
 ## Version 5.0: three more cases
 
 Adds three cases, chosen to widen the game's geographic and thematic range: Mali Empire (Corroboration), the Inca quipu (Close reading of primary evidence), and the French Revolution (Continuity and change).
@@ -117,6 +123,17 @@ The answer key lives **outside** this folder, in `../teacher-docs/`, on purpose.
 Everything inside this folder is deployed and publicly downloadable (including
 this README, `schema.sql` and `shared/caseNotes.js`). None of it contains a
 secret, but don't put an answer key or credentials in here.
+
+## Beta tester account
+
+The package includes a dedicated beta-testing pupil account:
+
+- **Username:** `Kirito`
+- **Password:** `beater`
+
+On the first successful sign-in, the account is automatically provisioned in D1. It is preloaded with every case completed at the **Ideal** tier, every case trophy, every completionist badge, every Atlas entry, perfect content-knowledge records, and all cumulative review checkpoints completed. It also bypasses teacher case assignments, retry restrictions, hints/time-limit restrictions, and the Archivist master switch so the full pupil feature set can be tested.
+
+The account is marked internally as a beta tester and is reserved; ordinary pupil sign-up cannot claim the `Kirito` detective name. The Archivist still requires a configured Workers AI binding (`AI`) on the deployment.
 
 ## Backend setup (do this once, before your first deploy)
 
@@ -164,8 +181,8 @@ Three secrets are **required**. There are no defaults and no fallbacks:
 | Secret | Purpose | Rules |
 |---|---|---|
 | `SESSION_SECRET` | Signs sign-in tokens. | Random string, **32+ characters**. If it is missing or short, the whole API refuses to run (a missing secret must never become a guessable one). |
-| `Admin_User` | Admin sign-in username. | Optional. Defaults to `Administrator` if the secret is absent/blank. Matching is case-insensitive, and pupils and teachers can't register it. A Pages secret overrides the fallback. |
-| `Admin_Password` | Admin sign-in password. | Optional. Defaults to `password4admin` if the secret is absent/blank. The fallback and any secret must be **12+ characters**. A Pages secret overrides the fallback. |
+| `Admin_User` | Admin sign-in username. | **Required** for admin sign-in. There is no default. Matching is case-insensitive, and pupils and teachers can't register it. |
+| `Admin_Password` | Admin sign-in password. | **Required** for admin sign-in, **12+ characters**. There is no default. |
 
 Secret names are case-sensitive: type `Admin_User` and `Admin_Password` exactly. They are optional because the package includes fallback admin credentials for initial access; set the Pages secrets to replace those fallbacks before normal use.
 
@@ -512,7 +529,7 @@ Node, safe to run any time you edit `index.html` or the Function.
 ## Troubleshooting
 
 - **"set the SESSION_SECRET secret" error on every request:** `SESSION_SECRET` is missing or under 32 characters. Set it (step 3) and redeploy.
-- **Teacher/admin sign-in:** if no `Admin_User` or `Admin_Password` Pages secrets are set, the built-in fallback is `Administrator` / `password4admin`. Setting either secret overrides its fallback. The password must be at least 12 characters.
+- **Teacher/admin sign-in:** there are no built-in credentials. Until both `Admin_User` and `Admin_Password` are set as Pages secrets (password 12+ characters), admin sign-in is disabled and only teacher accounts already in the database can sign in.
 - **The Archivist button never appears:** the admin switch is off (or unsaved), the pupil is playing as a guest, or the case isn't finished. If pupils see "not set up on this site yet", the `AI` binding is missing.
 - **"Backend not configured" errors, or progress not syncing:** the `TD_DB`
   D1 binding isn't set. Check `wrangler.toml` has a real `database_id` (not
